@@ -1,0 +1,42 @@
+
+Quick steps to build FastJetClustering:
+---------------------------------------
+
+    - FastJetClustering depends on the following packages:
+        LCIO GEAR Marlin ROOT FastJet and CMake
+        
+        if you have access to /afs/desy.de/ then you will find all this packages
+            (EXCEPT FastJet) under:
+
+            /afs/desy.de/project/ilcsoft/sw/i386_gcc34_sl4/   # SL4 32bit
+            /afs/desy.de/project/ilcsoft/sw/i386_gcc41_sl5/   # SL5 32bit
+            /afs/desy.de/project/ilcsoft/sw/x86_64_gcc41_sl5/ # SL5 64bit
+
+    - Follow this steps to configure/build FastJetClustering using /afs/desy.de :
+        
+        mkdir build ; pushd build
+        
+        # initialize ilcsoft
+        . /afs/desy.de/project/ilcsoft/sw/<YOUR_ARCHITECTURE>/<ILCSOFT_VERSION>/init_ilcsoft.sh
+
+        # ------ build FastJet ----------------------------------------------
+        wget "http://www.lpthe.jussieu.fr/~salam/fastjet/repo/fastjet-2.4.2.tar.gz"
+        tar xzf fastjet-*gz
+        pushd fastjet-*/
+        ./configure --prefix=$PWD/../fastjet
+        make && make install
+        popd
+        # -------------------------------------------------------------------
+
+        # ------ build FastJetClustering ------------------------------------
+        cmake -C $ILCSOFT/ILCSoft.cmake -DFastJet_DIR=$PWD/fastjet ..
+        make install
+        popd
+        # -------------------------------------------------------------------
+
+
+        # ------ load FastJetClustering into Marlin -------------------------
+        export MARLIN_DLL=$MARLIN_DLL:$PWD/lib/libFastJetClustering.so
+        Marlin -x > mysteer.xml  # should include FastJetClustering
+
+
