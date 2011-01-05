@@ -16,10 +16,14 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 
 
-### DEPENDENCIES ############################################################
+### SETTINGS ################################################################
 
-# additionally search for cmake macros/moules defined by this project
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+# ilcsoft cmake macros / default settings
+INCLUDE( ilcsoft_default_settings )
+
+
+
+### DEPENDENCIES ############################################################
 
 # ------- required packages -------------------
 SET( required_packages LCIO GEAR Marlin ROOT FastJet )
@@ -49,14 +53,6 @@ ENDFOREACH()
 
 
 
-### SETTINGS ################################################################
-
-# ilcsoft cmake macros / default settings
-INCLUDE( ilcsoft_default_settings )
-INCLUDE( MacroAddSharedLibrary )
-
-
-
 ### DOCUMENTATION ###########################################################
 
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" ON )
@@ -72,20 +68,19 @@ ENDIF()
 
 ### LIBRARY #################################################################
 
-# library name
-SET( libname ${PROJECT_NAME} )
-
 # include directories
-INCLUDE_DIRECTORIES( "include" )
-INSTALL( DIRECTORY include DESTINATION . FILES_MATCHING PATTERN "*.h" )
+INCLUDE_DIRECTORIES( ./include )
+INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # add library
+SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
+INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
 
 # display some variables and write them to cache
