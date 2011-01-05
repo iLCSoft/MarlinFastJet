@@ -2,7 +2,7 @@
 Quick steps to build FastJetClustering:
 ---------------------------------------
 
-    - FastJetClustering depends on the following packages: LCIO GEAR Marlin ROOT FastJet, CMake and CMakeModules
+    - FastJetClustering depends on the following packages: LCIO GEAR Marlin ROOT FastJet, CMake and CMakeModules.
         
         if you have access to /afs/desy.de/ then you will find all this packages under:
 
