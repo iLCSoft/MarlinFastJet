@@ -16,14 +16,14 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 
 
-### SETTINGS ################################################################
+### DEPENDENCIES ############################################################
 
-# ilcsoft cmake macros / default settings
+# FindILCSOFT_CMAKE_MODULES.cmake needs to be in CMAKE_MODULE_PATH
+FIND_PACKAGE( ILCSOFT_CMAKE_MODULES 1.11 REQUIRED )
+
+# load default settings from ILCSOFT_CMAKE_MODULES
 INCLUDE( ilcsoft_default_settings )
 
-
-
-### DEPENDENCIES ############################################################
 
 # ------- required packages -------------------
 SET( required_packages LCIO GEAR Marlin ROOT FastJet )
@@ -80,7 +80,7 @@ ADD_DEFINITIONS( "-Wno-long-long" )
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
-INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+INSTALL( TARGETS ${libname} DESTINATION lib )
 
 
 # display some variables and write them to cache
