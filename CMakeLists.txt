@@ -79,7 +79,7 @@ ADD_DEFINITIONS( "-Wno-long-long" )
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
-INSTALL( TARGETS ${libname} DESTINATION lib )
+INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
 
 # display some variables and write them to cache
