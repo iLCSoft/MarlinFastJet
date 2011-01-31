@@ -2,7 +2,7 @@
 Quick steps to build FastJetClustering:
 ---------------------------------------
 
-    - FastJetClustering depends on the following packages: LCIO GEAR Marlin ROOT FastJet, CMake and CMakeModules.
+    - FastJetClustering depends on the following packages: ILCUTIL Marlin ROOT FastJet and CMake.
         
         if you have access to /afs/desy.de/ then you will find all this packages under:
 
@@ -13,15 +13,15 @@ Quick steps to build FastJetClustering:
 
         if you do NOT have acces to /afs/desy.de/ or you do not have an SL4/SL5 machine the easiest
             way is to use ilcinstall (http://ilcsoft.desy.de/portal/software_packages/ilcinstall/).
-            Please use an ilcinstall version >= v01-10.
+            Please use an ilcinstall version >= v01-11.
     
 
-            Set the ilcinstall installation path in releases/v01-10/release-versions.py
+            Set the ilcinstall installation path in releases/v01-11/release-versions.py
             Comment out any tools other than the FastJetClustering dependencies in both configuration
                 files: release-base.cfg and release-ilcsoft.cfg
 
 
             And launch:
-            ilcsoft-install releases/v01-10/release-base.cfg   # to install the core tools
-            ilcsoft-install releases/v01-10/release-ilcsoft.cfg   # to install the remaining tools
+            ilcsoft-install releases/v01-11/release-base.cfg   # to install the core tools
+            ilcsoft-install releases/v01-11/release-ilcsoft.cfg   # to install the remaining tools
 

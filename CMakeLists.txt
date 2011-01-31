@@ -11,7 +11,7 @@ PROJECT( FastJetClustering )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 1 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 2 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 
@@ -24,29 +24,15 @@ FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED )
 INCLUDE( ilcsoft_default_settings )
 
 
-# ------- required packages -------------------
-SET( required_packages LCIO GEAR Marlin ROOT FastJet )
+FIND_PACKAGE( Marlin 1.0 REQUIRED )
+FIND_PACKAGE( FastJet REQUIRED )
+FIND_PACKAGE( ROOT REQUIRED )
 
-# ------- optional packages -------------------
-#SET( optional_packages AIDA )
-
-
-# ------- do the search -----------------------
-FOREACH( pkg ${required_packages} )
-    FIND_PACKAGE( ${pkg} REQUIRED )
-ENDFOREACH()
-
-FOREACH( pkg ${optional_packages} )
-    FIND_PACKAGE( ${pkg} QUIET )
-ENDFOREACH()
-
-FOREACH( pkg ${required_packages} ${optional_packages} )
+FOREACH( pkg Marlin FastJet ROOT )
     IF( ${pkg}_FOUND )
         INCLUDE_DIRECTORIES( ${${pkg}_INCLUDE_DIRS} )
         LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
-        ADD_DEFINITIONS ( ${${pkg}_DEFINITIONS} )
-    ELSE()
-        MESSAGE( STATUS "${pkg} not found" )
+        #ADD_DEFINITIONS ( ${${pkg}_DEFINITIONS} )
     ENDIF()
 ENDFOREACH()
 
