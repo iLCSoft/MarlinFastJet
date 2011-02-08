@@ -1,7 +1,7 @@
 ########################################################
 # cmake file for building Marlin example Package
 # @author Jan Engels, DESY
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 ########################################################
 
 
@@ -32,22 +32,9 @@ FOREACH( pkg Marlin FastJet ROOT )
     IF( ${pkg}_FOUND )
         INCLUDE_DIRECTORIES( ${${pkg}_INCLUDE_DIRS} )
         LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
-        #ADD_DEFINITIONS ( ${${pkg}_DEFINITIONS} )
+        ADD_DEFINITIONS ( ${${pkg}_DEFINITIONS} )
     ENDIF()
 ENDFOREACH()
-
-
-
-### DOCUMENTATION ###########################################################
-
-OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" OFF )
-
-IF( INSTALL_DOC AND EXISTS "${PROJECT_SOURCE_DIR}/doc/CMakeLists.txt" )
-    ADD_SUBDIRECTORY( doc )
-ELSE()
-    MESSAGE( STATUS "INSTALL_DOC set to OFF" )
-    SET( INSTALL_DOC OFF )
-ENDIF()
 
 
 
@@ -55,17 +42,16 @@ ENDIF()
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )
-INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
+#INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # add library
-SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( src library_sources )
-ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
-INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+ADD_SHARED_LIBRARY( ${PROJECT_NAME} ${library_sources} )
+INSTALL_SHARED_LIBRARY( ${PROJECT_NAME} DESTINATION lib )
 
 
 # display some variables and write them to cache
