@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="us-ascii"?>
+	<!--
+		?xml-stylesheet type="text/xsl"
+		href="http://ilcsoft.desy.de/marlin/marlin.xsl"?
+	-->
+	<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+	<execute>
+		<processor name="MyFastJetProcessor" />
+		<processor name="MyLCIOOutputProcessor" />
+	</execute>
+
+	<global>
+		<parameter name="LCIOInputFiles"> myfile.slcio </parameter>
+		<parameter name="SkipNEvents" value="0" />
+		<parameter name="SupressCheck" value="false" />
+		<parameter name="Verbosity"	options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE  </parameter>
+	</global>
+
+
+	<processor name="MyFastJetProcessor" type="FastJetProcessor">
+		<parameter name="algorithm" type="StringVec">kt_algorithm 0.75</parameter>
+		<parameter name="clusteringMode" type="StringVec"> InclusiveIterativeNJets 4 10</parameter>
+		<parameter name="jetOut" type="string" lcioOutType="ReconstructedParticle">JetOut </parameter>
+		<parameter name="recParticleIn" type="string" lcioInType="ReconstructedParticle"> PandoraPFANewPFOs </parameter>
+		<parameter name="recombinationScheme" type="string">E_scheme </parameter>
+	</processor>
+
+	<processor name="MyLCIOOutputProcessor" type="LCIOOutputProcessor">
+		<parameter name="LCIOOutputFile" type="string">outputfile.slcio </parameter>
+		<parameter name="LCIOWriteMode" type="string">WRITE_NEW</parameter>
+		<!--parameter name="SplitFileSizekB" type="int">1992294 </parameter-->
+	</processor>
+
+	<processor name="ProgressProcessor" type="ProgressProcessor">
+	</processor>
+
+</marlin>
