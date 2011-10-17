@@ -6,4 +6,51 @@
     MarlinFastJet is a small wrapper around the FastJet library for Jet Finding.<br>
     It has access to a many of the Infrared and Collinear Safe jet finding algorithms like kt_algorithm, anti_kt_algorithm and SISCone.
 
+<h3>Available Algorithms</h3>
+	The most used algorithms are kt_algorithm, cambridge_algorithm, antikt_algorithm, ee_kt_algorithm and SISConePlugin.
+	For a complete list start the processor and look at the log (MESSAGE).
+	The corresponding parameter is "algorithm", and it takes at least the algorithm name, plus its paramers (if any, typically R).
+
+<h3>Clustering Modes</h3>
+	This processor support 4 different kind of clustering modes, but not each mode is supported by each algorithm.
+	It can be set via the parameter "clusteringMode" in the steering file.
+
+	We have available:
+	<ul>
+	  <li>Inclusive <minPt>: Clusters the entire event.</li>
+	  <li>InclusiveIterativeNJets <NJets> <minE>: Clusters the entire event, but tries to modify the R parameter of the used algorithm to get exactly <NJets> with a minimum energy of <minE>. Very CPU intensive and might not be Infrared Safe.</li>
+	  <li>ExclusiveNJets <NJets>: Clusters event until exactly <Njets> are found, but introduces "beam jets" close to the beam axis. These "beam jets" are meant for the remnants of the proton at a hadron collider, and get rejected. Saves the value of YCut at which N-1 (N+1) jets would have been found in the LCEvent.</li>
+	  <li>ExclusiveYCut <YCut>: As ExclusiveNJets, but stops when the minimal distance of 2 jets is at <YCut></li>
+	</ul>
+
+<h3>Example steering file </h3>
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd"> <br />
+	<execute> <br />
+		<processor name="MyFastJetProcessor" /> <br />
+		<processor name="MyLCIOOutputProcessor" /> <br />
+	</execute> <br />
+
+	<global> <br />
+		<parameter name="LCIOInputFiles"> myfile.slcio </parameter> <br />
+		<parameter name="SkipNEvents" value="0" /> <br />
+		<parameter name="SupressCheck" value="false" /> <br />
+		<parameter name="Verbosity"	options="DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT"> MESSAGE  </parameter> <br />
+	</global> <br />
+
+
+	<processor name="MyFastJetProcessor" type="FastJetProcessor"> <br />
+		<parameter name="algorithm" type="StringVec">kt_algorithm 0.75</parameter> <br />
+		<parameter name="clusteringMode" type="StringVec"> InclusiveIterativeNJets 4 10</parameter> <br />
+		<parameter name="jetOut" type="string" lcioOutType="ReconstructedParticle">JetOut </parameter> <br />
+		<parameter name="recParticleIn" type="string" lcioInType="ReconstructedParticle"> PandoraPFANewPFOs </parameter> <br />
+		<parameter name="recombinationScheme" type="string">E_scheme </parameter> <br />
+	</processor> <br />
+
+	<processor name="MyLCIOOutputProcessor" type="LCIOOutputProcessor"> <br />
+		<parameter name="LCIOOutputFile" type="string">outputfile.slcio </parameter> <br />
+		<parameter name="LCIOWriteMode" type="string">WRITE_NEW</parameter> <br />
+		<!--parameter name="SplitFileSizekB" type="int">1992294 </parameter--> <br />
+	</processor> <br />
+
+</marlin> <br />
 */
