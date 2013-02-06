@@ -604,10 +604,7 @@ EVENT::ReconstructedParticle* FastJetProcessor::getRecPar(fastjet::PseudoJet& fj
 	jet->setEnergy( fj.E() );
 	jet->setMass( fj.m() );
 
-	double* mom = new double[3];
-	mom[0] = fj.px();
-	mom[1] = fj.py();
-	mom[2] = fj.pz();
+	double mom[3] = {fj.px(), fj.py(), fj.pz()};
 	jet->setMomentum( mom );
 
 	// add information about the included particles
