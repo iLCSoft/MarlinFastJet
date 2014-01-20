@@ -11,7 +11,7 @@ PROJECT( MarlinFastJet )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 1 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 2 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 
@@ -25,13 +25,19 @@ INCLUDE( ilcsoft_default_settings )
 
 
 FIND_PACKAGE( Marlin 1.0 REQUIRED ) # minimum required Marlin version
-INCLUDE_DIRECTORIES( ${Marlin_INCLUDE_DIRS} )
+INCLUDE_DIRECTORIES( SYSTEM ${Marlin_INCLUDE_DIRS} )
 LINK_LIBRARIES( ${Marlin_LIBRARIES} )
 ADD_DEFINITIONS( ${Marlin_DEFINITIONS} )
 
 #FIND_PACKAGE( FastJet 2.4.2 REQUIRED COMPONENTS SISConePlugin siscone siscone_spherical CDFConesPlugin NestedDefsPlugin EECambridgePlugin JadePlugin )
-FIND_PACKAGE( FastJet 2.4.2 REQUIRED COMPONENTS SISConePlugin )
-INCLUDE_DIRECTORIES( ${FastJet_INCLUDE_DIRS} )
+FIND_PACKAGE ( FastJet )
+IF ( NOT ${FastJet_VERSION} VERSION_LESS 3 )
+  FIND_PACKAGE( FastJet 3 REQUIRED COMPONENTS siscone siscone_spherical fastjetplugins )
+ELSEIF ( NOT ${FastJet_VERSION} VERSION_LESS 2.4.2 )
+  FIND_PACKAGE( FastJet 2 REQUIRED COMPONENTS SISConePlugin )
+ENDIF()
+
+INCLUDE_DIRECTORIES( SYSTEM ${FastJet_INCLUDE_DIRS} )
 LINK_LIBRARIES( ${FastJet_LIBRARIES} ${FastJet_COMPONENT_LIBRARIES} )
 
 
@@ -62,7 +68,7 @@ ENDIF()
 
 # definitions to pass to the compiler
 #ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
-ADD_DEFINITIONS( "-Wno-long-long" )
+ADD_DEFINITIONS( "-Wno-long-long -Wextra -Wshadow -Wall -ansi -pedantic" )
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )

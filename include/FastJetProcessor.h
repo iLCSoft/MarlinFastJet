@@ -55,13 +55,13 @@ public:
 
 	/** Called for every run.
 	 */
-	virtual void processRunHeader(LCRunHeader* run){};
+	virtual void processRunHeader(LCRunHeader* ){};
 
 	/** Called for every event - the working horse.
 	 */
 	virtual void processEvent(LCEvent * evt);
 
-	virtual void check(LCEvent * evt) {};
+	virtual void check(LCEvent * ) {};
 
 	/** Called after data processing for clean up.
 	 */
@@ -73,6 +73,7 @@ private:
 
 	// the LC Collection names for input/output
 	string	_lcParticleInName;
+	string	_lcParticleOutName;
 	string	_lcJetOutName;
 
 
@@ -120,6 +121,7 @@ private:
 	int _statsNrSkippedEmptyEvents;
 	int _statsNrSkippedFixedNrJets;
 	int _statsNrSkippedMaxIterations;
+	bool _storeParticlesInJets;
 
 };
 

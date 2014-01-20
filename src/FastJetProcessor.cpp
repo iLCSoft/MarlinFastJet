@@ -49,6 +49,8 @@ FastJetProcessor::FastJetProcessor() : Processor("FastJetProcessor")
 	registerInputCollection(LCIO::RECONSTRUCTEDPARTICLE, "recParticleIn", "a list of all reconstructed particles we are searching for jets in.", _lcParticleInName, "MCParticle");
 	registerOutputCollection(LCIO::RECONSTRUCTEDPARTICLE, "jetOut", "The identified jets", _lcJetOutName, "JetOut");
 
+	registerOutputCollection(LCIO::RECONSTRUCTEDPARTICLE, "recParticleOut", "a list of all reconstructed particles used to make jets. If no value specified collection is not created", _lcParticleOutName, "");
+
 	// the parameters. See description for details
 	StringVec defAlgoAndParam;
 	defAlgoAndParam.push_back("kt_algorithm");
@@ -65,6 +67,11 @@ FastJetProcessor::FastJetProcessor() : Processor("FastJetProcessor")
 			_jetRecoSchemeName,
 			string("E_scheme"));
 
+	registerProcessorParameter(
+			"storeParticlesInJets",
+			"Store the list of particles that were clustered into jets in the recParticleOut collection",
+			_storeParticlesInJets,
+			false);
 
 	StringVec defClusterMode;
 	defClusterMode.push_back("Inclusive");
@@ -457,6 +464,12 @@ void FastJetProcessor::processEvent(LCEvent * evt)
 
 	// create output collection and save every jet with its particles in it
 	IMPL::LCCollectionVec* lccJetsOut = new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
+	// create output collection and save every particle which contributes to a jet
+	IMPL::LCCollectionVec* lccParticlesOut(NULL);
+	if (_storeParticlesInJets){
+	  lccParticlesOut= new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
+	  lccParticlesOut->setSubset(true);
+	}
 
 	vector< fastjet::PseudoJet >::iterator it;
 
@@ -465,10 +478,19 @@ void FastJetProcessor::processEvent(LCEvent * evt)
 		// create a reconstructed particle for this jet, and add all the containing particles to it
 		ReconstructedParticle* rec = getRecPar( (*it), cs.constituents(*it) );
 		lccJetsOut->addElement( rec );
+
+		if (_storeParticlesInJets) 
+		{
+			for (unsigned int n = 0; n < cs.constituents(*it).size(); ++n)
+			{
+				ReconstructedParticle* p = dynamic_cast< ReconstructedParticle* > (_reconstructedPars->getElementAt((cs.constituents(*it))[n].user_index()));
+				lccParticlesOut->addElement( p ); 
+			}
+		}
 	}
 
 	evt->addCollection(lccJetsOut, _lcJetOutName);
-
+	if (_storeParticlesInJets) evt->addCollection(lccParticlesOut, _lcParticleOutName);
 
 	// special case for the exclusive jet mode: we can save the transition y_cut value
 	if (_clusterMode == FJ_exclusive_nJets && jets.size() == _nrJets)
@@ -612,6 +634,7 @@ EVENT::ReconstructedParticle* FastJetProcessor::getRecPar(fastjet::PseudoJet& fj
 	{
 		ReconstructedParticle* p = dynamic_cast< ReconstructedParticle* > (_reconstructedPars->getElementAt(constituents[n].user_index())) ;
 		jet->addParticle( p );
+
 	}
 
 	return jet;
@@ -644,6 +667,7 @@ void FastJetProcessor::end()
 			<< " - Skipped Events after max nr of iterations reached: " << _statsNrSkippedMaxIterations
 			<< " - Skipped Search for Fixed Nr Jets (due to insufficient nr of particles):" << _statsNrSkippedFixedNrJets
 			<< endl;
+
 }
 
 
