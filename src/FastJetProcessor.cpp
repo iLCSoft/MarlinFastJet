@@ -26,6 +26,9 @@
 #include <fastjet/NestedDefsPlugin.hh>
 #include <fastjet/EECambridgePlugin.hh>
 #include <fastjet/JadePlugin.hh>
+
+#include <fastjet/contrib/ValenciaPlugin.hh>
+
 //#include <fastjet/D0RunIIConePlugin.hh>
 //#include <fastjet/TrackJetPlugin.hh>
 //#include <fastjet/ATLASConePlugin.hh>
@@ -268,6 +271,7 @@ void FastJetProcessor::initJetAlgo()
 
 	if (isJetAlgo("SISConeSphericalPlugin", 2, FJ_inclusive | OWN_inclusiveIteration))
 	{
+
 		fastjet::SISConeSphericalPlugin* pl;
 
 		pl = new fastjet::SISConeSphericalPlugin(
@@ -276,6 +280,19 @@ void FastJetProcessor::initJetAlgo()
 				);
 
 		_jetAlgo = new fastjet::JetDefinition(pl);
+	}
+
+	if (isJetAlgo("ValenciaPlugin", 3, FJ_exclusive_nJets | FJ_exclusive_yCut))
+	{
+
+	  fastjet::contrib::ValenciaPlugin* pl;
+	  pl = new fastjet::contrib::ValenciaPlugin(
+						    atof(_jetAlgoNameAndParams[1].c_str()),  // R value
+						    atof(_jetAlgoNameAndParams[2].c_str()),  // beta value 
+						    atof(_jetAlgoNameAndParams[3].c_str())   // gamma value 
+						    ); 
+
+	  _jetAlgo = new fastjet::JetDefinition(pl);
 	}
 
 // TODO: Maybe we should complete the user defined (ATLAS, CMS, ..) algorithms
@@ -410,6 +427,23 @@ void FastJetProcessor::processEvent(LCEvent * evt)
 
 	} catch (DataNotAvailableException e) {
 		streamlog_out(WARNING) << e.what() << endl << "Skipping" << endl;
+
+		//create dummy empty collection only in case there are processor that need the presence of them in later stages
+
+		// create output collection and save every jet with its particles in it
+		IMPL::LCCollectionVec* lccJetsOut = new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
+		// create output collection and save every particle which contributes to a jet
+
+		IMPL::LCCollectionVec* lccParticlesOut(NULL);
+		if (_storeParticlesInJets){
+		  lccParticlesOut= new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
+		  lccParticlesOut->setSubset(true);
+		}
+
+		evt->addCollection(lccJetsOut, _lcJetOutName);
+		if (_storeParticlesInJets) evt->addCollection(lccParticlesOut, _lcParticleOutName);
+		
+
 		return ;
 	}
 
