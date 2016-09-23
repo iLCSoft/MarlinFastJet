@@ -22,7 +22,6 @@
 
 
 class FastJetProcessor;
-typedef std::vector< fastjet::PseudoJet > PseudoJetList;
 
 #include "FastJetProcessor.h"
 #include "EClusterMode.h"
@@ -31,6 +30,7 @@ typedef std::vector< fastjet::PseudoJet > PseudoJetList;
 #include "marlin/Processor.h"
 
 //FastJet
+#include <fastjet/PseudoJet.hh>
 #include <fastjet/SISConePlugin.hh>
 #include <fastjet/SISConeSphericalPlugin.hh>
 #include <fastjet/CDFMidPointPlugin.hh>
@@ -45,6 +45,8 @@ typedef std::vector< fastjet::PseudoJet > PseudoJetList;
 #include <string>
 
 #define ITERATIVE_INCLUSIVE_MAX_ITERATIONS 20
+typedef std::vector< fastjet::PseudoJet > PseudoJetList;
+
 
 
 class SkippedFixedNrJetException: public std::runtime_error {
