@@ -598,7 +598,10 @@ PseudoJetList FastJetUtil::doIterativeInclusiveClustering( PseudoJetList& pjList
     streamlog_out(DEBUG) << iIter << " " << R << " " << jets.size() << " " << nJets << std::endl;
 
     if (nJets == _requestedNumberOfJets) { // if the number of jets is correct: success!
-	break;
+      delete pluginSisCone; pluginSisCone = NULL;
+      delete pluginSisConeSph; pluginSisConeSph = NULL;
+      delete jetDefinition;
+      break;
 
     } else if (nJets < _requestedNumberOfJets) {
 	// if number of jets is too small: we need a smaller Radius per jet (so
