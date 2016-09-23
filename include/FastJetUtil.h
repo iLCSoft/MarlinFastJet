@@ -56,7 +56,8 @@ public:
 
 class SkippedMaxIterationException: public std::runtime_error {
 public:
-  SkippedMaxIterationException():std::runtime_error("") {}
+  SkippedMaxIterationException( PseudoJetList& jets) :std::runtime_error(""), _jets(jets) {}
+  PseudoJetList& _jets;
 };
 
 
@@ -500,7 +501,7 @@ PseudoJetList FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* rec
     if (reconstructedPars->getNumberOfElements() < (int)_requestedNumberOfJets) {
 
       streamlog_out(WARNING) << "Not enough elements in the input collection to create " << _requestedNumberOfJets << " jets." << std::endl;
-      throw SkippedMaxIterationException();
+      throw SkippedFixedNrJetException();
 
     } else {
 
@@ -624,8 +625,7 @@ PseudoJetList FastJetUtil::doIterativeInclusiveClustering( PseudoJetList& pjList
 
   if (iIter == ITERATIVE_INCLUSIVE_MAX_ITERATIONS) {
     streamlog_out(WARNING) << "Maximum number of iterations reached. Canceling" << std::endl;
-    throw SkippedFixedNrJetException();
-    // APS: No longer true, nothing will be returned!
+    throw SkippedMaxIterationException( jets );
     // Currently we will return the latest results, independent if the number is actually matched
     // jetsReturn.clear();
   }

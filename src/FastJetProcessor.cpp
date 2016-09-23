@@ -160,6 +160,7 @@ void FastJetProcessor::processEvent(LCEvent * evt)
   } catch( SkippedFixedNrJetException& e ) {
     _statsNrSkippedFixedNrJets++;
   } catch( SkippedMaxIterationException& e ) {
+    jets = e._jets;
     _statsNrSkippedMaxIterations++;
   }
 
