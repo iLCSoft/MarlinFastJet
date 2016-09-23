@@ -24,18 +24,13 @@
 #include <vector>
 #include <string>
 
-using namespace marlin;
-using namespace lcio;
-using namespace std;
-using namespace fastjet;
-
-//Forward Declaration
-class FastJetUtil;
-
-typedef vector< fastjet::PseudoJet > PseudoJetList;
+ //Forward Declaration
+ class FastJetUtil;
+typedef std::vector< fastjet::PseudoJet > PseudoJetList;
 
 
-class FastJetProcessor : Processor {
+
+class FastJetProcessor : marlin::Processor {
 public:
   FastJetProcessor();
   virtual ~FastJetProcessor();
@@ -69,11 +64,11 @@ public:
 private:
 
   // the LC Collection names for input/output
-  string	_lcParticleInName;
-  string	_lcParticleOutName;
-  string	_lcJetOutName;
+  std::string	_lcParticleInName;
+  std::string	_lcParticleOutName;
+  std::string	_lcJetOutName;
 
-  EVENT::ReconstructedParticle* getRecPar(fastjet::PseudoJet& fj, const vector< fastjet::PseudoJet >& constituents);
+  EVENT::ReconstructedParticle* getRecPar(fastjet::PseudoJet& fj, const PseudoJetList& constituents);
 
   LCCollection*	_reconstructedPars;
 
@@ -92,6 +87,6 @@ private:
 
 };
 
-ostream& operator<<(ostream& out, EClusterMode& m);
+std::ostream& operator<<(std::ostream& out, EClusterMode& m);
 
 #endif /* FASTJETPROCESSOR_H_ */

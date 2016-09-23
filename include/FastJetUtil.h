@@ -1,7 +1,28 @@
 #ifndef FASTJETUTIL_H
 #define FASTJETUTIL_H 1
+/*
+ * In order to use in a processor
+ *  do forward declaration to FastJetUtil
+ *    class FastJetUtil;
+ *
+ * make FastJetUtil* a member object
+ *
+ * in the constructor call
+ *    registerFastJetParameters( this )
+ *
+ * in init call
+ *  init()
+
+ * in procesEvent
+ * call:
+ *   PseudoJetList convertFromRecParticle(LCCollection* recCol);
+ *   inline PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
+ *
+ */
+
 
 class FastJetProcessor;
+typedef std::vector< fastjet::PseudoJet > PseudoJetList;
 
 #include "FastJetProcessor.h"
 #include "EClusterMode.h"
@@ -21,6 +42,7 @@ class FastJetProcessor;
 #include <fastjet/contrib/ValenciaPlugin.hh>
 
 #include <stdexcept>
+#include <string>
 
 #define ITERATIVE_INCLUSIVE_MAX_ITERATIONS 20
 
@@ -30,7 +52,11 @@ public:
   SkippedFixedNrJetException():std::runtime_error("") {}
 };
 
-#include <string>
+class SkippedMaxIterationException: public std::runtime_error {
+public:
+  SkippedMaxIterationException():std::runtime_error("") {}
+};
+
 
 class FastJetUtil {
 
@@ -42,7 +68,7 @@ public:
 		 _jetAlgoType(),
 		 _clusterModeNameAndParam( EVENT::StringVec() ),
 		 _clusterModeName(""),
-		 _clusterMode(EClusterMode::NONE),
+		 _clusterMode( NONE ),
 		 _jetRecoSchemeName(""),
 		 _jetRecoScheme(),
 		 _strategyName(""),
@@ -55,7 +81,7 @@ public:
 
 
   FastJetUtil(const FastJetUtil& rhs):
-    _cs(new ClusterSequence(*(rhs._cs))),
+    _cs(new fastjet::ClusterSequence(*(rhs._cs))),
     _jetAlgoNameAndParams( rhs._jetAlgoNameAndParams ),
     _jetAlgoName(rhs._jetAlgoName),
     _jetAlgo(new fastjet::JetDefinition(*(rhs._jetAlgo))),
@@ -78,7 +104,7 @@ public:
       return *this;
     }
     delete this->_cs;
-    this->_cs = new ClusterSequence(*(rhs._cs));
+    this->_cs = new fastjet::ClusterSequence(*(rhs._cs));
     delete this->_jetAlgo;
     this->_jetAlgo = new fastjet::JetDefinition(*rhs._jetAlgo);
     return *this;
@@ -92,7 +118,7 @@ public:
 
 public:
 
-  ClusterSequence *_cs;
+  fastjet::ClusterSequence *_cs;
 
   // jet algorithm
   EVENT::StringVec _jetAlgoNameAndParams;
@@ -121,13 +147,14 @@ public:
 
 public:
   /// call in processor constructor (c'tor) to register parameters
-  inline void registerFastJetParameters(FastJetProcessor* proc);
+  template< class T>
+  inline void registerFastJetParameters(T* proc);
   /// call in processor init
   inline void init();
   /// convert reconstructed particles to pseudo jets
   inline PseudoJetList convertFromRecParticle(LCCollection* recCol);
   /// does the actual clustering
-  inline std::vector< fastjet::PseudoJet > clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
+  inline PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
 
 protected:
   // helper functions to init the jet algorithms in general
@@ -135,15 +162,16 @@ protected:
   void initRecoScheme();
   void initStrategy();
   void initClusterMode();
-  inline bool isJetAlgo(string algo, int nrParams, int supportedModes);
+  inline bool isJetAlgo(std::string algo, int nrParams, int supportedModes);
 
   // special clustering function, called from clusterJets
-  vector < fastjet::PseudoJet > doIterativeInclusiveClustering(PseudoJetList& pjList);
+  PseudoJetList doIterativeInclusiveClustering(PseudoJetList& pjList);
 
 }; //end class FastJetUtil
 
 
-void FastJetUtil::registerFastJetParameters( FastJetProcessor* proc ) {
+template< class T >
+void FastJetUtil::registerFastJetParameters( T* proc ) {
 
   EVENT::StringVec defAlgoAndParam;
   defAlgoAndParam.push_back("kt_algorithm");
@@ -198,50 +226,50 @@ void FastJetUtil::initJetAlgo() {
 
   // example: kt_algorithm, needs 1 parameter, supports inclusive, inclusiveIterative, exlusiveNJets and exlusiveYCut clustering
   if (isJetAlgo("kt_algorithm", 1, FJ_inclusive | FJ_exclusive_nJets | FJ_exclusive_yCut | OWN_inclusiveIteration)) {
-    _jetAlgoType = kt_algorithm;
+    _jetAlgoType = fastjet::kt_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
 
   }
 
   if (isJetAlgo("cambridge_algorithm", 1, FJ_inclusive | FJ_exclusive_nJets | FJ_exclusive_yCut | OWN_inclusiveIteration)) {
-    _jetAlgoType = cambridge_algorithm;
+    _jetAlgoType = fastjet::cambridge_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("antikt_algorithm", 1, FJ_inclusive | OWN_inclusiveIteration)) {
-    _jetAlgoType = antikt_algorithm;
+    _jetAlgoType = fastjet::antikt_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("genkt_algorithm", 2, FJ_inclusive | OWN_inclusiveIteration | FJ_exclusive_nJets | FJ_exclusive_yCut)) {
-    _jetAlgoType = genkt_algorithm;
+    _jetAlgoType = fastjet::genkt_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), atof(_jetAlgoNameAndParams[2].c_str()), _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("cambridge_for_passive_algorithm", 1, FJ_inclusive | OWN_inclusiveIteration | FJ_exclusive_nJets | FJ_exclusive_yCut)) {
-    _jetAlgoType = cambridge_for_passive_algorithm;
+    _jetAlgoType = fastjet::cambridge_for_passive_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("genkt_for_passive_algorithm", 1, FJ_inclusive | OWN_inclusiveIteration)) {
-    _jetAlgoType = genkt_for_passive_algorithm;
+    _jetAlgoType = fastjet::genkt_for_passive_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("ee_kt_algorithm", 0, FJ_exclusive_nJets | FJ_exclusive_yCut)) {
-    _jetAlgoType = ee_kt_algorithm;
+    _jetAlgoType = fastjet::ee_kt_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("ee_genkt_algorithm", 1, FJ_exclusive_nJets | FJ_exclusive_yCut)) {
-    _jetAlgoType = ee_genkt_algorithm;
+    _jetAlgoType = fastjet::ee_genkt_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
 					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
   }
@@ -300,19 +328,19 @@ void FastJetUtil::initJetAlgo() {
   //		_jetAlgo = new fastjet::JetDefinition(pl);
   //	}
 
-  streamlog_out(MESSAGE) << endl; // end of list of available algorithms
+  streamlog_out(MESSAGE) << std::endl; // end of list of available algorithms
 
   if (!_jetAlgo) {
     streamlog_out(ERROR) << "The given algorithm \"" << _jetAlgoName
-			 << "\" is unknown to me!" << endl;
+			 << "\" is unknown to me!" << std::endl;
     throw Exception("Unknown FastJet algorithm.");
   }
 
-  streamlog_out(MESSAGE) << "jet algorithm: " << _jetAlgo->description() << endl;
+  streamlog_out(MESSAGE) << "jet algorithm: " << _jetAlgo->description() << std::endl;
 }
 
 
-bool FastJetUtil::isJetAlgo(string algo, int nrParams, int supportedModes)
+bool FastJetUtil::isJetAlgo(std::string algo, int nrParams, int supportedModes)
 {
   streamlog_out(MESSAGE) << " " << algo;
 
@@ -326,17 +354,17 @@ bool FastJetUtil::isJetAlgo(string algo, int nrParams, int supportedModes)
 
   // check if we have enough number of parameters
   if ((int)_jetAlgoNameAndParams.size() - 1 != nrParams) {
-    streamlog_out(ERROR) << endl
-			 << "Wrong numbers of parameters for algorithm: " << algo << endl
-			 << "We need " << nrParams << " params, but we got " << _jetAlgoNameAndParams.size() - 1 << endl;
+    streamlog_out(ERROR) << std::endl
+			 << "Wrong numbers of parameters for algorithm: " << algo << std::endl
+			 << "We need " << nrParams << " params, but we got " << _jetAlgoNameAndParams.size() - 1 << std::endl;
     throw Exception("You have insufficient number of parameters for this algorithm! See log for more details.");
   }
 
   // check if the mode is supported via a binary AND
   if ((supportedModes & _clusterMode) != _clusterMode) {
-    streamlog_out(ERROR) << endl
+    streamlog_out(ERROR) << std::endl
 			 << "This algorithm is not capable of running in this clustering mode ("
-			 << _clusterMode << "). Sorry!" << endl;
+			 << _clusterMode << "). Sorry!" << std::endl;
     throw Exception("This algorithm is not capable of running in this mode");
   }
 
@@ -362,11 +390,11 @@ void FastJetUtil::initRecoScheme() {
     _jetRecoScheme = fastjet::BIpt2_scheme;
   else {
       streamlog_out(ERROR)
-	<< "Unknown recombination scheme: " << _jetRecoSchemeName << endl;
+	<< "Unknown recombination scheme: " << _jetRecoSchemeName << std::endl;
       throw Exception("Unknown FastJet recombination scheme! See log for more details.");
   }
 
-  streamlog_out(MESSAGE) << "recombination scheme: " << _jetRecoSchemeName << endl;
+  streamlog_out(MESSAGE) << "recombination scheme: " << _jetRecoSchemeName << std::endl;
 }
 
 void FastJetUtil::initStrategy() {
@@ -375,7 +403,7 @@ void FastJetUtil::initStrategy() {
   // changing this would (most likely) only change the speed of calculation, not the outcome
   _strategy = fastjet::Best;
   _strategyName = "Best";
-  streamlog_out(MESSAGE) << "Strategy: " << _strategyName << endl;
+  streamlog_out(MESSAGE) << "Strategy: " << _strategyName << std::endl;
 }
 
 /// parse the clustermode string
@@ -432,15 +460,15 @@ void FastJetUtil::initClusterMode() {
     throw Exception("Unknown cluster mode.");
   }
 
-  streamlog_out(MESSAGE) << "cluster mode: " << _clusterMode << endl;
+  streamlog_out(MESSAGE) << "cluster mode: " << _clusterMode << std::endl;
 }
 
-std::vector< fastjet::PseudoJet > FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* reconstructedPars) {
+PseudoJetList FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* reconstructedPars) {
   ///////////////////////////////
   // do the jet finding for the user defined parameter jet finder
-  _cs = new ClusterSequence(pjList, *_jetAlgo);
+  _cs = new fastjet::ClusterSequence(pjList, *_jetAlgo);
 
-  std::vector< fastjet::PseudoJet > jets; // will contain the found jets
+  PseudoJetList jets; // will contain the found jets
 
   if (_clusterMode == FJ_inclusive) {
 
@@ -455,7 +483,7 @@ std::vector< fastjet::PseudoJet > FastJetUtil::clusterJets( PseudoJetList& pjLis
     // sanity check: if we have not enough particles, FJ will cause an assert
     if (reconstructedPars->getNumberOfElements() < (int)_requestedNumberOfJets) {
 
-      streamlog_out(WARNING) << "Not enough elements in the input collection to create " << _requestedNumberOfJets << " jets." << endl;
+      streamlog_out(WARNING) << "Not enough elements in the input collection to create " << _requestedNumberOfJets << " jets." << std::endl;
       throw SkippedFixedNrJetException();
 
     } else {
@@ -469,8 +497,8 @@ std::vector< fastjet::PseudoJet > FastJetUtil::clusterJets( PseudoJetList& pjLis
     // sanity check: if we have not enough particles, FJ will cause an assert
     if (reconstructedPars->getNumberOfElements() < (int)_requestedNumberOfJets) {
 
-      streamlog_out(WARNING) << "Not enough elements in the input collection to create " << _requestedNumberOfJets << " jets." << endl;
-      throw SkippedFixedNrJetException();
+      streamlog_out(WARNING) << "Not enough elements in the input collection to create " << _requestedNumberOfJets << " jets." << std::endl;
+      throw SkippedMaxIterationException();
 
     } else {
 
@@ -500,15 +528,15 @@ PseudoJetList FastJetUtil::convertFromRecParticle(LCCollection* recCol) {
   return pjList;
 }
 
-vector < fastjet::PseudoJet > FastJetUtil::doIterativeInclusiveClustering( PseudoJetList& pjList) {
+PseudoJetList FastJetUtil::doIterativeInclusiveClustering( PseudoJetList& pjList) {
   // lets do a iterative procedure until we found the correct number of jets
   // for that we will do inclusive clustering, modifying the R parameter in some kind of minimization
   // this is based on Marco Battaglia's FastJetClustering
 
   double R = M_PI_4;	// maximum of R is Pi/2, minimum is 0. So we start hat Pi/4
   double RDiff = R / 2;	// the step size we modify the R parameter at each iteration. Its size for the n-th step is R/(2n), i.e. starts with R/2
-  vector< fastjet::PseudoJet > jets;
-  vector< fastjet::PseudoJet > jetsReturn;
+  PseudoJetList jets;
+  PseudoJetList jetsReturn;
   unsigned nJets;
   int iIter = 0;	// nr of current iteration
 
@@ -539,7 +567,7 @@ vector < fastjet::PseudoJet > FastJetUtil::doIterativeInclusiveClustering( Pseud
   for (iIter=0; iIter<ITERATIVE_INCLUSIVE_MAX_ITERATIONS; iIter++) {
 
     // do the clustering for this value of R. For this we need to re-initialize the JetDefinition, as it takes the R parameter
-    JetDefinition* jetDefinition = NULL;
+    fastjet::JetDefinition* jetDefinition = NULL;
 
     // unfortunately SisCone(spherical) are being initialized differently, so we have to check for this
     if (useSisCone) {
@@ -549,11 +577,11 @@ vector < fastjet::PseudoJet > FastJetUtil::doIterativeInclusiveClustering( Pseud
       pluginSisConeSph = new fastjet::SISConeSphericalPlugin(R, sisConeOverlapThreshold);
       jetDefinition = new fastjet::JetDefinition(pluginSisConeSph);
     } else {
-      jetDefinition = new JetDefinition(_jetAlgoType, R, _jetRecoScheme, _strategy);
+      jetDefinition = new fastjet::JetDefinition(_jetAlgoType, R, _jetRecoScheme, _strategy);
     }
 
     // now we can finally create the cluster sequence
-    ClusterSequence cs(pjList, *jetDefinition);
+    fastjet::ClusterSequence cs(pjList, *jetDefinition);
 
     jets = cs.inclusive_jets(0);	// no pt cut, we will do an energy cut
     jetsReturn.clear();
@@ -565,7 +593,7 @@ vector < fastjet::PseudoJet > FastJetUtil::doIterativeInclusiveClustering( Pseud
 	jetsReturn.push_back(jets[j]);
     nJets = jetsReturn.size();
 
-    streamlog_out(DEBUG) << iIter << " " << R << " " << jets.size() << " " << nJets << endl;
+    streamlog_out(DEBUG) << iIter << " " << R << " " << jets.size() << " " << nJets << std::endl;
 
     if (nJets == _requestedNumberOfJets) { // if the number of jets is correct: success!
 	break;
@@ -590,8 +618,9 @@ vector < fastjet::PseudoJet > FastJetUtil::doIterativeInclusiveClustering( Pseud
   }
 
   if (iIter == ITERATIVE_INCLUSIVE_MAX_ITERATIONS) {
-    streamlog_out(WARNING) << "Maximum number of iterations reached. Canceling" << endl;
+    streamlog_out(WARNING) << "Maximum number of iterations reached. Canceling" << std::endl;
     throw SkippedFixedNrJetException();
+    // APS: No longer true, nothing will be returned!
     // Currently we will return the latest results, independent if the number is actually matched
     // jetsReturn.clear();
   }
