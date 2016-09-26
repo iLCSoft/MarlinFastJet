@@ -2,10 +2,12 @@
 #define FASTJETUTIL_H 1
 /*
  * In order to use in a processor
- *  do forward declaration to FastJetUtil
+ *  do forward declaration to FastJetUtil in your MyJetProcessor.h
  *    class FastJetUtil;
  *
  * make FastJetUtil* a member object
+ * make FastJetUtil a friend class of your Processor (registerProcessorParameter is protected so we need to be a friend)
+ *   friend class FastJetUtil;
  *
  * in the constructor call
  *    registerFastJetParameters( this )
