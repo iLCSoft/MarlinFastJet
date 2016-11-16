@@ -58,5 +58,5 @@ export PATH="$Ninja_HOME:$PATH"
 #     ILCSOFT
 #--------------------------------------------------------------------------------
 
-ILCSOFT=/cvmfs/clicdp.cern.ch/iLCSoft/builds/2016-09-12/x86_64-slc6-gcc48-opt
+ILCSOFT=/cvmfs/clicdp.cern.ch/iLCSoft/builds/current/x86_64-slc6-gcc48-opt
 source $ILCSOFT/init_ilcsoft.sh
