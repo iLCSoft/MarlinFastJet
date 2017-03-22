@@ -22,6 +22,9 @@ class FastJetClustering : public Processor {
   virtual Processor*  newProcessor() { return new FastJetClustering ; }
     
   FastJetClustering() ;
+
+  FastJetClustering(const FastJetClustering&) = delete;
+  FastJetClustering& operator=(const FastJetClustering&) = delete;
   
   virtual void init() ;
 
@@ -40,28 +43,28 @@ class FastJetClustering : public Processor {
  protected:
 
   // root file and tree objects
-  TFile * _rootfile;
-  TTree * _Etree;
+  TFile * _rootfile=NULL;
+  TTree * _Etree=NULL;
 
-  std::string _inputCollection;
-  std::string _outputCollection;
+  std::string _inputCollection{};
+  std::string _outputCollection{};
 
-  LCCollectionVec* _jetsCol;
+  LCCollectionVec* _jetsCol=NULL;
 
-  fastjet::JetAlgorithm fAlgorithm; 
+  fastjet::JetAlgorithm fAlgorithm{};
 
-  std::string sAlgorithm; 
+  std::string sAlgorithm{};
 
   // px, py, pz, E, nptc
   float _jetVector[5][50];
 
-  float _eCMS;
+  float _eCMS=0.0;
 
-  int _nRun, _nEvt, _nJets, _nJetsHE;
+  int _nRun=0, _nEvt=0, _nJets=0, _nJetsHE=0;
 
-  int _print, _nJetMax, _fillTree;
+  int _print=0, _nJetMax=0, _fillTree=0;
 
-  double _RPar, _rp, _eJet;
+  double _RPar=0.0, _rp=0.0, _eJet=0.0;
 } ;
 
 #endif

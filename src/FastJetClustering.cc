@@ -158,22 +158,22 @@ void FastJetClustering::processEvent( LCEvent * evt ) {
 
   if(_nJetMax>0 && _eJet>0){
 
-    fastjet::JetDefinition jet_def(algorithm, _rp, recomb_scheme, strategy); 
+    fastjet::JetDefinition jet_def_0(algorithm, _rp, recomb_scheme, strategy);
 
-    fastjet::ClusterSequence cs(input_particles, jet_def);
+    fastjet::ClusterSequence cs_0(input_particles, jet_def_0);
   
-    vector<fastjet::PseudoJet> jets = cs.inclusive_jets();
+    vector<fastjet::PseudoJet> jets_0 = cs_0.inclusive_jets();
 
-    vector<fastjet::PseudoJet> sortedJets = sorted_by_E(cs.inclusive_jets());
+    vector<fastjet::PseudoJet> sortedJets_0 = sorted_by_E(cs_0.inclusive_jets());
 
-    if(_print>0)cout << "FastJetClustering: Nb of Jets " << sortedJets.size() << endl;
+    if(_print>0)cout << "FastJetClustering: Nb of Jets " << sortedJets_0.size() << endl;
   
-    _nJets = sortedJets.size();
+    _nJets = sortedJets_0.size();
 
     _nJetsHE=0;
 
-    for(unsigned ij=0; ij<sortedJets.size();ij++){
-      if(sortedJets[ij].e() > _eJet) _nJetsHE++;
+    for(unsigned ij=0; ij<sortedJets_0.size();ij++){
+      if(sortedJets_0[ij].e() > _eJet) _nJetsHE++;
     }
     
     while(_nJetsHE <_nJetMax && _rp>0.35 && _nJetMax>0 && _eJet>0){
@@ -267,7 +267,7 @@ void FastJetClustering::processEvent( LCEvent * evt ) {
   evt->addCollection(_jetsCol ,_outputCollection) ; 
 }
 
-void  FastJetClustering::check( LCEvent * evt ) { 
+void  FastJetClustering::check( LCEvent* ) {
 
 }
 
