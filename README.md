@@ -1,5 +1,6 @@
 # MarlinFastJet
 [![Build Status](https://travis-ci.org/iLCSoft/MarlinFastJet.svg?branch=master)](https://travis-ci.org/iLCSoft/MarlinFastJet)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/11935/badge.svg)](https://scan.coverity.com/projects/ilcsoft-marlinfastjet)
 
 MarlinFastJet is the interface between Marlin and FastJet
 
