@@ -4,10 +4,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 ########################################################
 
-
 # project name
 PROJECT( MarlinFastJet )
-
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
@@ -18,11 +16,16 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 ### DEPENDENCIES ############################################################
 
+# load fastjet util
+# FIND_FILE( FJULOCATION "FastJetUtil.h" HINTS ENV{ILCSOFT}/MarlinFastJet )
+# GET_FILENAME_COMPONENT( FJU_INCLUDE_DIR ${FJULOCATION} PATH )
+# MESSAGE( STATUS "CMAKE_INCLUDE_PATH: " ENV{FJU_INCLUDE_DIR} )
+# INCLUDE_DIRECTORIES( ${FJU_INCLUDE_DIR} )
+
 FIND_PACKAGE( ILCUTIL REQUIRED COMPONENTS ILCSOFT_CMAKE_MODULES )
 
 # load default settings from ILCSOFT_CMAKE_MODULES
 INCLUDE( ilcsoft_default_settings )
-
 
 FIND_PACKAGE( Marlin 1.0 REQUIRED ) # minimum required Marlin version
 INCLUDE_DIRECTORIES( SYSTEM ${Marlin_INCLUDE_DIRS} )
@@ -34,18 +37,16 @@ INCLUDE_DIRECTORIES( SYSTEM ${ROOT_INCLUDE_DIRS} )
 LINK_LIBRARIES( ${ROOT_LIBRARIES} )
 ADD_DEFINITIONS( ${ROOT_DEFINITIONS} )
 
-
 #FIND_PACKAGE( FastJet 2.4.2 REQUIRED COMPONENTS SISConePlugin siscone siscone_spherical CDFConesPlugin NestedDefsPlugin EECambridgePlugin JadePlugin )
 FIND_PACKAGE ( FastJet )
 IF ( NOT ${FastJet_VERSION} VERSION_LESS 3 )
-  FIND_PACKAGE( FastJet 3 REQUIRED COMPONENTS siscone siscone_spherical fastjetplugins fastjetcontribfragile )
+  FIND_PACKAGE( FastJet 3 REQUIRED COMPONENTS siscone siscone_spherical fastjetplugins fastjetcontribfragile fastjettools)
 ELSEIF ( NOT ${FastJet_VERSION} VERSION_LESS 2.4.2 )
   FIND_PACKAGE( FastJet 2 REQUIRED COMPONENTS SISConePlugin )
 ENDIF()
 
 INCLUDE_DIRECTORIES( SYSTEM ${FastJet_INCLUDE_DIRS} )
 LINK_LIBRARIES( ${FastJet_LIBRARIES} ${FastJet_COMPONENT_LIBRARIES} )
-
 
 # optional package
 #FIND_PACKAGE( AIDA )
