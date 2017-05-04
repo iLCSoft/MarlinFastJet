@@ -13,8 +13,9 @@ enum EClusterMode {
 	OWN_inclusiveIteration = 8	// use FJ inclusive Clustering, but iterate until we have the desired number of jets
 };
 
-std::ostream& operator<<(std::ostream& out, EClusterMode& m) {
+namespace {
 
+std::ostream& operator<<(std::ostream& out, EClusterMode& m) {
   switch (m) {
   case OWN_inclusiveIteration:
     out << "InclusiveIterativeNJets"; break;
@@ -30,4 +31,5 @@ std::ostream& operator<<(std::ostream& out, EClusterMode& m) {
   return out;
 }
 
+}
 #endif // EClusterMode_h

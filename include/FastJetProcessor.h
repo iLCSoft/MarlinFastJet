@@ -80,6 +80,4 @@ private:
 
 };
 
-std::ostream& operator<<(std::ostream& out, EClusterMode& m);
-
 #endif /* FASTJETPROCESSOR_H_ */
