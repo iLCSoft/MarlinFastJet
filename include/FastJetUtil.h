@@ -15,10 +15,15 @@
  * in init call
  *  init()
 
- * in procesEvent
+ * in processEvent
  * call:
  *   PseudoJetList convertFromRecParticle(LCCollection* recCol);
  *   inline PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
+ * 
+ * If the processor is NOT in MarlinFastJet, add the following to CMakeLists.txt:
+ * FIND_FILE( FJULOCATION "FastJetUtil.h" HINTS ENV{ILCSOFT}/MarlinFastJet )
+ * GET_FILENAME_COMPONENT( FJU_INCLUDE_DIR ${FJULOCATION} PATH )
+ * INCLUDE_DIRECTORIES( ${FJU_INCLUDE_DIR} )
  *
  */
 
