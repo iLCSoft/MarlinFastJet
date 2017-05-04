@@ -24,22 +24,19 @@
 #include <vector>
 #include <string>
 
- //Forward Declaration
- class FastJetUtil;
+//Forward declaration
+class FastJetUtil;
 typedef std::vector< fastjet::PseudoJet > PseudoJetList;
-
-
 
 class FastJetProcessor : marlin::Processor {
 public:
   FastJetProcessor();
   virtual ~FastJetProcessor();
-
-
+  
   virtual Processor* newProcessor() {
     return new FastJetProcessor();
   }
-
+  
   /** Called at the begin of the job before anything is read.
    * Use to initialize the processor, e.g. book histograms.
    */
@@ -68,11 +65,7 @@ private:
   std::string	_lcParticleOutName;
   std::string	_lcJetOutName;
 
-  EVENT::ReconstructedParticle* getRecPar(fastjet::PseudoJet& fj, const PseudoJetList& constituents);
-
-  LCCollection*	_reconstructedPars;
-
-  int	_statsFoundJets;
+  int  _statsFoundJets;
   int _statsNrEvents;
   int _statsNrSkippedEmptyEvents;
   int _statsNrSkippedFixedNrJets;

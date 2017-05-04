@@ -18,7 +18,8 @@
  * in processEvent
  * call:
  *   PseudoJetList convertFromRecParticle(LCCollection* recCol);
- *   inline PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
+ *   ReconstructedParticle* convertFromPseudoJet(const fastjet::PseudoJet& jet, const PseudoJetList& constituents, LCCollection recCol);
+ *   PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* recCol);
  * 
  * If the processor is NOT in MarlinFastJet, add the following to CMakeLists.txt:
  * FIND_FILE( FJULOCATION "FastJetUtil.h" HINTS ENV{ILCSOFT}/MarlinFastJet )
@@ -27,14 +28,11 @@
  *
  */
 
-
-class FastJetProcessor;
-
-#include "FastJetProcessor.h"
 #include "EClusterMode.h"
 
 #include "LCIOSTLTypes.h"
 #include "marlin/Processor.h"
+#include <IMPL/ReconstructedParticleImpl.h>
 
 //FastJet
 #include <fastjet/PseudoJet.hh>
@@ -163,19 +161,21 @@ public:
   inline void init();
   /// convert reconstructed particles to pseudo jets
   inline PseudoJetList convertFromRecParticle(LCCollection* recCol);
+  /// convert fastjet pseudojet to reconstructed particle
+  inline EVENT::ReconstructedParticle* convertFromPseudoJet(const fastjet::PseudoJet& jet, const PseudoJetList& constituents, LCCollection* reconstructedPars);
   /// does the actual clustering
   inline PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
 
 protected:
   // helper functions to init the jet algorithms in general
-  void initJetAlgo();
-  void initRecoScheme();
-  void initStrategy();
-  void initClusterMode();
+  inline void initJetAlgo();
+  inline void initRecoScheme();
+  inline void initStrategy();
+  inline void initClusterMode();
   inline bool isJetAlgo(std::string algo, int nrParams, int supportedModes);
 
   // special clustering function, called from clusterJets
-  PseudoJetList doIterativeInclusiveClustering(PseudoJetList& pjList);
+  inline PseudoJetList doIterativeInclusiveClustering(PseudoJetList& pjList);
 
 }; //end class FastJetUtil
 
@@ -538,6 +538,29 @@ PseudoJetList FastJetUtil::convertFromRecParticle(LCCollection* recCol) {
   return pjList;
 }
 
+EVENT::ReconstructedParticle* FastJetUtil::convertFromPseudoJet(const fastjet::PseudoJet& jet, const PseudoJetList& constituents, LCCollection* reconstructedPars){
+  
+  // create a ReconstructedParticle that saves the jet                                                                                                                                                                                                               
+  ReconstructedParticleImpl* reco = new ReconstructedParticleImpl();
+  
+  // save the jet's parameters                                                                                                                                                                                                                                       
+  reco->setEnergy( jet.E() );
+  reco->setMass( jet.m() );
+  
+  double mom[3] = {jet.px(), jet.py(), jet.pz()};
+  reco->setMomentum( mom );
+  
+  // add information about the included particles                                                                                                                                                                                                                    
+  for (unsigned int n = 0; n < constituents.size(); ++n)
+    {
+      ReconstructedParticle* p = dynamic_cast< ReconstructedParticle* > (reconstructedPars->getElementAt(constituents[n].user_index())) ;
+      reco->addParticle( p );
+      
+    }
+  
+  return reco;
+}
+
 PseudoJetList FastJetUtil::doIterativeInclusiveClustering( PseudoJetList& pjList) {
   // lets do a iterative procedure until we found the correct number of jets
   // for that we will do inclusive clustering, modifying the R parameter in some kind of minimization
@@ -639,6 +662,5 @@ PseudoJetList FastJetUtil::doIterativeInclusiveClustering( PseudoJetList& pjList
 
   return jetsReturn;
 }
-
 
 #endif // FastJetUtil_h
