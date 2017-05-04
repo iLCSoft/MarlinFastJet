@@ -26,7 +26,6 @@ FastJetProcessor::FastJetProcessor() : Processor("FastJetProcessor"),
 				       _lcParticleInName(""),
 				       _lcParticleOutName(""),
 				       _lcJetOutName(""),
-				       _reconstructedPars(NULL),
 				       _statsFoundJets(0),
 				       _statsNrEvents(0),
 				       _statsNrSkippedEmptyEvents(0),
@@ -60,7 +59,6 @@ FastJetProcessor::FastJetProcessor(const FastJetProcessor& rhs):
   _lcParticleInName(rhs._lcParticleInName),
   _lcParticleOutName(rhs._lcParticleOutName),
   _lcJetOutName(rhs._lcJetOutName),
-  _reconstructedPars(rhs._reconstructedPars) ,
   _statsFoundJets(rhs._statsFoundJets),
   _statsNrEvents(rhs._statsNrEvents),
   _statsNrSkippedEmptyEvents(rhs._statsNrSkippedEmptyEvents),
@@ -87,6 +85,7 @@ void FastJetProcessor::init()
 
   // parse the given steering parameters
   _fju->init();
+  streamlog_out(MESSAGE) << "Jet Algorithm: " << _fju->_jetAlgo->description() << std::endl << std::endl;
 
   _statsFoundJets = 0;
   _statsNrEvents = 0;
@@ -134,13 +133,11 @@ void FastJetProcessor::processEvent(LCEvent * evt)
   }
 
   // convert to pseudojet list
-  _reconstructedPars = particleIn;
-
   PseudoJetList pjList = _fju->convertFromRecParticle(particleIn);
 
   PseudoJetList jets;
   try {
-    jets = _fju->clusterJets(pjList, _reconstructedPars);
+    jets = _fju->clusterJets(pjList, particleIn);
   } catch( SkippedFixedNrJetException& e ) {
     _statsNrSkippedFixedNrJets++;
   } catch( SkippedMaxIterationException& e ) {
@@ -166,13 +163,13 @@ void FastJetProcessor::processEvent(LCEvent * evt)
 
   for (it=jets.begin(); it != jets.end(); it++) {
     // create a reconstructed particle for this jet, and add all the containing particles to it
-    ReconstructedParticle* rec = getRecPar( (*it), _fju->_cs->constituents(*it) );
+    ReconstructedParticle* rec = _fju->convertFromPseudoJet( (*it), _fju->_cs->constituents(*it), particleIn);
     lccJetsOut->addElement( rec );
 
     if (_storeParticlesInJets) {
       for (unsigned int n = 0; n < _fju->_cs->constituents(*it).size(); ++n) {
 	ReconstructedParticle* p =
-	  static_cast<ReconstructedParticle*>(_reconstructedPars->getElementAt((_fju->_cs->constituents(*it))[n].user_index()));
+	  static_cast<ReconstructedParticle*>(particleIn->getElementAt((_fju->_cs->constituents(*it))[n].user_index()));
 	lccParticlesOut->addElement( p );
       }
     }
@@ -192,29 +189,6 @@ void FastJetProcessor::processEvent(LCEvent * evt)
     lccJetParams.setValue(std::string("y_{n,n+1}"), (float)_fju->_cs->exclusive_ymerge(nrJets));
   }
 
-}
-
-EVENT::ReconstructedParticle* FastJetProcessor::getRecPar(fastjet::PseudoJet& fj, const PseudoJetList& constituents )
-{
-  // create a ReconstructedParticle that saves the jet
-  ReconstructedParticleImpl* jet = new ReconstructedParticleImpl();
-
-  // save the jet's parameters
-  jet->setEnergy( fj.E() );
-  jet->setMass( fj.m() );
-
-  double mom[3] = {fj.px(), fj.py(), fj.pz()};
-  jet->setMomentum( mom );
-
-  // add information about the included particles
-  for (unsigned int n = 0; n < constituents.size(); ++n)
-    {
-      ReconstructedParticle* p = dynamic_cast< ReconstructedParticle* > (_reconstructedPars->getElementAt(constituents[n].user_index())) ;
-      jet->addParticle( p );
-
-    }
-
-  return jet;
 }
 
 /** Called after data processing for clean up.
