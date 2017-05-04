@@ -75,16 +75,16 @@ class FastJetTopTagger : marlin::Processor {
   FastJetUtil* _fju;
 
   std::string _R;
-  std::string _deltaP;
-  std::string _deltaR;
-  std::string _cos_theta_W_max;
+  double _deltaP;
+  double _deltaR;
+  double _cos_theta_W_max;
 
   // list of pseudo particles / jets
   fastjet::JHTopTagger _jhtoptagger;
 
  private:
-  FastJetTopTagger(const FastJetTopTagger& rhs);
-  FastJetTopTagger & operator = (const FastJetTopTagger&){ return *this; };
+  FastJetTopTagger(const FastJetTopTagger& rhs) = delete;
+  FastJetTopTagger & operator = (const FastJetTopTagger&) = delete;
 
 };
 

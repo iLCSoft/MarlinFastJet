@@ -40,9 +40,9 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
 				       _storeParticlesInJets( false ),
 				       _fju(new FastJetUtil()),
 				       _R(""),
-				       _deltaP(""),
-				       _deltaR(""),
-				       _cos_theta_W_max(""),
+				       _deltaP(0.),
+				       _deltaR(0.),
+				       _cos_theta_W_max(0.),
 				       _jhtoptagger(fastjet::JHTopTagger())
 {
   _description = "Using the FastJet tool JHTagger to identify top jets";
@@ -72,37 +72,16 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
   registerProcessorParameter("deltaP",
 			     "Subjets must carry at least this fraction of the original jet's p_t",
 			     _deltaP,
-			     std::string("0.05"));
+			     0.05);
   registerProcessorParameter("deltaR",
 			     "Subjets must be separated by at least this Manhattan distance",
 			     _deltaR,
-			     std::string("0.05"));
+			     0.05);
   registerProcessorParameter("cos_theta_W_max",
 			     "The maximal allowed value of the W helicity angle",
 			     _cos_theta_W_max,
-			     std::string("1.0"));
+			     1.0);
 }
-
-FastJetTopTagger::FastJetTopTagger(const FastJetTopTagger& rhs):
-  Processor( rhs.name() ),
-  _lcParticleInName(rhs._lcParticleInName),
-  _lcParticleOutName(rhs._lcParticleOutName),
-  _lcJetOutName(rhs._lcJetOutName),
-  _lcTopTaggerOutName(rhs._lcTopTaggerOutName),
-  _statsFoundJets(rhs._statsFoundJets),
-  _statsNrEvents(rhs._statsNrEvents),
-  _statsNrSkippedEmptyEvents(rhs._statsNrSkippedEmptyEvents),
-  _statsNrSkippedFixedNrJets(rhs._statsNrSkippedFixedNrJets),
-  _statsNrSkippedMaxIterations(rhs._statsNrSkippedMaxIterations),
-  _storeParticlesInJets(rhs._storeParticlesInJets),
-  _fju( new FastJetUtil(*rhs._fju) ),
-  _R(rhs._R),
-  _deltaP(rhs._deltaR),
-  _deltaR(rhs._deltaP),
-  _cos_theta_W_max(rhs._cos_theta_W_max),
-  _jhtoptagger( fastjet::JHTopTagger(rhs._jhtoptagger) )
-{}
-//     FastJetTopTagger& operator=(const FastJetTopTagger&( {}
 
 FastJetTopTagger::~FastJetTopTagger(){
   delete _fju;
@@ -121,7 +100,7 @@ void FastJetTopTagger::init()
   streamlog_out(MESSAGE) << "Jet Algorithm: " << _fju->_jetAlgo->description() << std::endl << std::endl;
   
   // initate the top tagger
-  _jhtoptagger = fastjet::JHTopTagger(atof(_deltaP.c_str()), atof(_deltaR.c_str()), atof(_cos_theta_W_max.c_str())); //mW=80.4
+  _jhtoptagger = fastjet::JHTopTagger(_deltaP, _deltaR, _cos_theta_W_max); //mW=80.4
   streamlog_out(MESSAGE) << "Top tagger implementation: " << _jhtoptagger.description() << std::endl;
   //_jhtoptagger.set_top_selector(fastjet::SelectorMassRange(145, 205));
   //_jhtoptagger.set_W_selector(fastjet::SelectorMassRange(65, 95));

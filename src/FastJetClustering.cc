@@ -285,22 +285,3 @@ void FastJetClustering::end(){
     _rootfile->Close();
   }
 }
-
-/*
-std::ostream& operator<<(std::ostream& out, EClusterMode& m) {
-
-  switch (m) {
-  case OWN_inclusiveIteration:
-    out << "InclusiveIterativeNJets"; break;
-  case FJ_inclusive:
-    out << "Inclusive"; break;
-  case FJ_exclusive_nJets:
-    out << "ExclusiveNJets"; break;
-  case FJ_exclusive_yCut:
-    out << "ExclusiveYCut"; break;
-  default:
-    out << "unknown"; break;
-  }
-  return out;
-}
-*/
