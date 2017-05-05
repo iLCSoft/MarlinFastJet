@@ -278,10 +278,16 @@ void FastJetUtil::initJetAlgo() {
 					  _jetAlgoType, _jetRecoScheme, _strategy);
   }
 
-  if (isJetAlgo("ee_genkt_algorithm", 1, FJ_exclusive_nJets | FJ_exclusive_yCut)) {
+  // backwards compatibility for using 1 parameter only assuming exponent to be 1.
+  bool commentOnAlgo = false;
+  if ((_jetAlgoNameAndParams[0]=="ee_genkt_algorithm") && ((int)_jetAlgoNameAndParams.size() == 2)){
+    _jetAlgoNameAndParams.push_back("1.");
+    commentOnAlgo = true;
+  }
+  if (isJetAlgo("ee_genkt_algorithm", 2, FJ_inclusive | FJ_exclusive_nJets | FJ_exclusive_yCut)) {
     _jetAlgoType = fastjet::ee_genkt_algorithm;
     _jetAlgo = new fastjet::JetDefinition(
-					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), _jetRecoScheme, _strategy);
+					  _jetAlgoType, atof(_jetAlgoNameAndParams[1].c_str()), atof(_jetAlgoNameAndParams[2].c_str()), _jetRecoScheme, _strategy);
   }
 
   if (isJetAlgo("SISConePlugin", 2, FJ_inclusive | OWN_inclusiveIteration)) {
@@ -339,6 +345,9 @@ void FastJetUtil::initJetAlgo() {
   //	}
 
   streamlog_out(MESSAGE) << std::endl; // end of list of available algorithms
+
+  //ee_genkt_algorithm
+  if (commentOnAlgo) {streamlog_out(MESSAGE) << std::endl << "When only 1 parameter is provided for ee_genkt_algorithm it is assumed to be R, and the exponent p is assumed to be equal to 1" << std::endl;}
 
   if (!_jetAlgo) {
     streamlog_out(ERROR) << "The given algorithm \"" << _jetAlgoName
