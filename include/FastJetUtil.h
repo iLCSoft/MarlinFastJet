@@ -200,6 +200,7 @@ void FastJetUtil::registerFastJetParameters( T* proc ) {
 
   EVENT::StringVec defClusterMode;
   defClusterMode.push_back("Inclusive");
+  defClusterMode.push_back("0.0");
   proc->registerProcessorParameter(
 				   "clusteringMode",
 				   "One of 'Inclusive <minPt>', 'InclusiveIterativeNJets <nrJets> <minE>', 'ExclusiveNJets <nrJets>', 'ExclusiveYCut <yCut>'. Note: not all modes are available for all algorithms.",
@@ -439,7 +440,7 @@ void FastJetUtil::initClusterMode() {
 
   // check the different cluster mode possibilities, and check if the number of parameters are correct
   if (_clusterModeName.compare("Inclusive") == 0) {
-
+    if ((_clusterModeNameAndParam.size() == 1) && (_clusterModeNameAndParam[0] == "Inclusive")) { _clusterModeNameAndParam.push_back("0."); } 
     if (_clusterModeNameAndParam.size() != 2) {
       throw Exception("Wrong Parameter(s) for Clustering Mode. Expected:\n <parameter name=\"clusteringMode\" type=\"StringVec\"> Inclusive <minPt> </parameter>");
     }
