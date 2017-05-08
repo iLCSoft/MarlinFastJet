@@ -430,16 +430,11 @@ void FastJetUtil::initClusterMode() {
   _clusterMode = NONE;
 
   // check the different cluster mode possibilities, and check if the number of parameters are correct
-  bool commentInclusiveMinPt = false;
-
   if (_clusterModeName.compare("Inclusive") == 0) {
-    if ((_clusterModeNameAndParam.size() == 1) && (_clusterModeNameAndParam[0] == "Inclusive")) { 
-      _clusterModeNameAndParam.push_back("0."); 
-      commentInclusiveMinPt = true;
-    } 
+
     if (_clusterModeNameAndParam.size() != 2) {
-      throw Exception("Wrong Parameter(s) for Clustering Mode. Expected:\n <parameter name=\"clusteringMode\" type=\"StringVec\"> Inclusive <minPt> </parameter>");
-      
+      streamlog_out(ERROR)  << "Wrong number of values for parameter clusteringMode 'Inclusive': missing minPt" << std::endl;
+      throw Exception("Wrong Parameter(s) for Clustering Mode. Expected:\n <parameter name=\"clusteringMode\" type=\"StringVec\"> Inclusive <minPt> </parameter>");      
     }
 
     _minPt = atof(_clusterModeNameAndParam[1].c_str());
@@ -477,11 +472,7 @@ void FastJetUtil::initClusterMode() {
     throw Exception("Unknown cluster mode.");
   }
 
-  if (commentInclusiveMinPt){
-    streamlog_out(MESSAGE) << "Cluster mode: " << _clusterMode << " (no <minPt> value configured in steering file, default value of 0.0 will be used)" << std::endl;
-  } else {
-    streamlog_out(MESSAGE) << "Cluster mode: " << _clusterMode << std::endl;
-  }
+  streamlog_out(MESSAGE) << "Cluster mode: " << _clusterMode << std::endl;
 
 }
 
