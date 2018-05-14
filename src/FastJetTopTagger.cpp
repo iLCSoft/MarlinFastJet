@@ -11,28 +11,25 @@
 #include <FastJetTopTagger.h>
 #include <FastJetUtil.h>
 
-#include <fastjet/Selector.hh>
-#include "fastjet/contrib/Nsubjettiness.hh"
-
 FastJetTopTagger aFastJetTopTagger;
 
 using namespace EVENT;
 using namespace IMPL;
-using namespace fastjet;
-using namespace fastjet::contrib;
 
 FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
 				       _lcParticleInName(""),
 				       _lcParticleOutName(""),
 				       _lcJetOutName(""),
 				       _lcTopTaggerOutName(""),
+				       _lcSubStructureOutName(""),
 				       _statsFoundJets(0),
 				       _statsNrEvents(0),
 				       _statsNrSkippedEmptyEvents(0),
 				       _statsNrSkippedFixedNrJets(0),
 				       _statsNrSkippedMaxIterations(0),
-				       _storeParticlesInJets( false ),
+				       _storeParticlesInJets(false),
 				       _fju(new FastJetUtil()),
+				       _doSubstructure(false),
 				       _beta(0.),
 				       _energyCorrelator(""),
 				       _axesMode(""),
@@ -40,10 +37,13 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
 				       _deltaP(0.),
 				       _deltaR(0.),
 				       _cos_theta_W_max(0.),
-				       _jhtoptagger(JHTopTagger()),
+				       _jhtoptagger(fastjet::JHTopTagger()),
+				       _energyCorrMeasureMap(),
+				       _maxECF(0),
 				       _energyCorrMap(),
 				       _axesModeMap(),
-				       _measureModeMap()
+				       _measureModeMap(),
+				       _nsubjettinessMap()
 
 {
   _description = "Using the FastJet tool JHTagger to identify top jets";
@@ -51,7 +51,7 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
   // the input & output collections
   registerInputCollection(LCIO::RECONSTRUCTEDPARTICLE, "recParticleIn", 
 			  "a list of all reconstructed particles we are searching for jets in.",
-			  _lcParticleInName, "MCParticle");
+			  _lcParticleInName, "SelectedPandoraPFANewPFOs");
   registerOutputCollection(LCIO::RECONSTRUCTEDPARTICLE, "jetOut", 
 			   "The identified jets", 
 			   _lcJetOutName, "JetOut");
@@ -60,6 +60,8 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
 			   _lcParticleOutName, "");
   registerOutputCollection(LCIO::RECONSTRUCTEDPARTICLE, "topTaggerOut", 
 			   "The top tagger output for each jet", _lcTopTaggerOutName, "TopTaggerOut");
+  registerOutputCollection(LCIO::RECONSTRUCTEDPARTICLE, "substuctureOut", 
+			   "The name of the substructure variables collection output", _lcSubStructureOutName, "TopTaggerSubstructureOut");
   
   registerProcessorParameter("storeParticlesInJets",
 			     "Store the list of particles that were clustered into jets in the recParticleOut collection",
@@ -70,8 +72,12 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
   _fju->registerFastJetParameters( this );
   
   //Substructure parameters
+  registerProcessorParameter( "doSubstructure",
+			      "Bool to decide whether (true) or not (false) to calculate substructure variables on each jet. Default is false.",
+			      _doSubstructure,
+			      bool(false));
   registerProcessorParameter("beta",
-			     "Beta is called angular exponent and weights the angular distances between the jet constituents compated to their pt in the calculation of the energy correlation function and subjettiness.",
+			     "Beta is called angular exponent and weights the angular distances between the jet constituents compared to their pt in the calculation of the energy correlation function and subjettiness.",
 			     _beta,
 			     1.);
   registerProcessorParameter("energyCorrelator",
@@ -119,22 +125,31 @@ void FastJetTopTagger::init()
   streamlog_out(MESSAGE) << "Jet Algorithm: " << _fju->_jetAlgo->description() << std::endl << std::endl;
   
   // initate the top tagger
-  _jhtoptagger = JHTopTagger(_deltaP, _deltaR, _cos_theta_W_max); //mW=80.4
+  _jhtoptagger = fastjet::JHTopTagger(_deltaP, _deltaR, _cos_theta_W_max);
   streamlog_out(MESSAGE) << "Top tagger implementation: " << _jhtoptagger.description() << std::endl;
-  //_jhtoptagger.set_top_selector(SelectorMassRange(145, 205)); //<--Not used here, can be set in analysis
-  //_jhtoptagger.set_W_selector(SelectorMassRange(65, 95)); //<--Not used here, can be set in analysis
+  //_jhtoptagger.set_top_selector(fastjet::SelectorMassRange(145, 205)); //<--Not used here, can be set in analysis
+  //_jhtoptagger.set_W_selector(fastjet::SelectorMassRange(65, 95)); //<--Not used here, can be set in analysis
 
   // initate substructure variables
-  _energyCorrMap.insert(std::make_pair("pt_R", EnergyCorrelator::pt_R));
-  _energyCorrMap.insert(std::make_pair("E_theta", EnergyCorrelator::E_theta));
-  _energyCorrMap.insert(std::make_pair("E_inv", EnergyCorrelator::E_inv));
+  if (_doSubstructure){ 
+    _energyCorrMeasureMap.insert(std::make_pair("pt_R", fastjet::contrib::EnergyCorrelator::pt_R));
+    _energyCorrMeasureMap.insert(std::make_pair("E_theta", fastjet::contrib::EnergyCorrelator::E_theta));
+    _energyCorrMeasureMap.insert(std::make_pair("E_inv", fastjet::contrib::EnergyCorrelator::E_inv));
+    _maxECF = 6;
+    for (std::map<std::string, fastjet::contrib::EnergyCorrelator::Measure>::iterator it=_energyCorrMeasureMap.begin(); it!=_energyCorrMeasureMap.end(); ++it){
+      std::vector<fastjet::contrib::EnergyCorrelator> vEnergyCorr;
+      for (int i=0; i<_maxECF; i++){ fastjet::contrib::EnergyCorrelator ECF(i, _beta, it->second); vEnergyCorr.push_back(ECF); }
+      _energyCorrMap.insert(std::make_pair(it->first, vEnergyCorr));
+    }
+    
+    _axesModeMap.insert(std::make_pair("KT_Axes", fastjet::contrib::KT_Axes()));
+    _axesModeMap.insert(std::make_pair("WTA_KT_Axes", fastjet::contrib::WTA_KT_Axes()));
+    _axesModeMap.insert(std::make_pair("OnePass_KT_Axes", fastjet::contrib::OnePass_KT_Axes()));
+    _axesModeMap.insert(std::make_pair("OnePass_WTA_KT_Axes", fastjet::contrib::OnePass_WTA_KT_Axes()));
+    
+    _measureModeMap.insert(std::make_pair("UnnormalizedMeasure", fastjet::contrib::UnnormalizedMeasure(_beta)));
 
-  _axesModeMap.insert(std::make_pair("KT_Axes", KT_Axes()));
-  _axesModeMap.insert(std::make_pair("WTA_KT_Axes", WTA_KT_Axes()));
-  _axesModeMap.insert(std::make_pair("OnePass_KT_Axes", OnePass_KT_Axes()));
-  _axesModeMap.insert(std::make_pair("OnePass_WTA_KT_Axes", OnePass_WTA_KT_Axes()));
-
-  _measureModeMap.insert(std::make_pair("UnnormalizedMeasure", UnnormalizedMeasure(_beta)));
+  }
 
   // counters
   _statsFoundJets = 0;
@@ -234,11 +249,6 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   LCCollectionVec* lccTopTaggerCosThetaW = new LCCollectionVec(LCIO::LCGENERICOBJECT);
   LCGenericObjectImpl* lcgTopTaggerCosThetaW = new LCGenericObjectImpl(0, 0, 2);
   
-  //Defining substructure functions
-  Nsubjettiness nSubJettiness1(1, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
-  Nsubjettiness nSubJettiness2(2, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
-  Nsubjettiness nSubJettiness3(3, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
-  
   //Save substructure functions
   LCCollectionVec* lccSubStructure = new LCCollectionVec(LCIO::LCGENERICOBJECT);
   LCGenericObjectImpl* lcgSubStructureC2 = new LCGenericObjectImpl(0, 0, 2);
@@ -248,7 +258,12 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   LCGenericObjectImpl* lcgSubStructureTau1 = new LCGenericObjectImpl(0, 0, 2);
   LCGenericObjectImpl* lcgSubStructureTau2 = new LCGenericObjectImpl(0, 0, 2);
   LCGenericObjectImpl* lcgSubStructureTau3 = new LCGenericObjectImpl(0, 0, 2);
-  
+
+  //NSubjetiness definitions
+  fastjet::contrib::Nsubjettiness nSubJettiness1(1, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
+  fastjet::contrib::Nsubjettiness nSubJettiness2(2, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
+  fastjet::contrib::Nsubjettiness nSubJettiness3(3, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
+
   //Loop over jets
   int index = 0;  
   PseudoJetList::iterator it;
@@ -266,26 +281,28 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
     }
 
     //Save substructure information
+    if (_doSubstructure){
 
-    //Substructure - energy correlation 
-    double ECF1 = getECF(*it, 1, _beta, _energyCorrelator);
-    double ECF2 = getECF(*it, 2, _beta, _energyCorrelator);   
-    double ECF3 = getECF(*it, 3, _beta, _energyCorrelator);   
-    double ECF4 = getECF(*it, 4, _beta, _energyCorrelator);   
-    double C2 = ECF3*pow(ECF1,1)/pow(ECF2, 2); lcgSubStructureC2->setDoubleVal(index, C2); 
-    double D2 = ECF3*pow(ECF1,3)/pow(ECF2, 3); lcgSubStructureD2->setDoubleVal(index, D2);
-    double C3 = ECF4*pow(ECF2,1)/pow(ECF3, 2); lcgSubStructureC3->setDoubleVal(index, C3);
-    double D3 = ECF4*pow(ECF2,3)/pow(ECF3, 3); lcgSubStructureD3->setDoubleVal(index, D3);
+      //Substructure - energy correlation 
+      double ECF1 = getECF(*it, 1, _energyCorrelator);
+      double ECF2 = getECF(*it, 2, _energyCorrelator);   
+      double ECF3 = getECF(*it, 3, _energyCorrelator);   
+      double ECF4 = getECF(*it, 4, _energyCorrelator);   
+      double C2 = ECF3*pow(ECF1,1)/pow(ECF2, 2); lcgSubStructureC2->setDoubleVal(index, C2); 
+      double D2 = ECF3*pow(ECF1,3)/pow(ECF2, 3); lcgSubStructureD2->setDoubleVal(index, D2);
+      double C3 = ECF4*pow(ECF2,1)/pow(ECF3, 2); lcgSubStructureC3->setDoubleVal(index, C3);
+      double D3 = ECF4*pow(ECF2,3)/pow(ECF3, 3); lcgSubStructureD3->setDoubleVal(index, D3);
     
-    //Substructure - NSubjettiness
-    double tau1 = nSubJettiness1(*it); lcgSubStructureTau1->setDoubleVal(index, tau1);
-    double tau2 = nSubJettiness2(*it); lcgSubStructureTau2->setDoubleVal(index, tau2);
-    double tau3 = nSubJettiness3(*it); lcgSubStructureTau3->setDoubleVal(index, tau3);
+      //Substructure - NSubjettiness
+      double tau1 = nSubJettiness1(*it); lcgSubStructureTau1->setDoubleVal(index, tau1);
+      double tau2 = nSubJettiness2(*it); lcgSubStructureTau2->setDoubleVal(index, tau2);
+      double tau3 = nSubJettiness3(*it); lcgSubStructureTau3->setDoubleVal(index, tau3);
+    }
 
-    //John-Hopkins top tagger
+    //Johns-Hopkins top tagger
     
     // search for top quark like structure in jet
-    PseudoJet top_candidate = _jhtoptagger(*it);
+    fastjet::PseudoJet top_candidate = _jhtoptagger(*it);
     
     if (top_candidate == 0){ 
       
@@ -302,27 +319,27 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
       lccTopTaggerOut->addElement(t);
 
       // save W candidate
-      PseudoJet top_candidate_W = top_candidate.structure_of<JHTopTagger>().W();
+      fastjet::PseudoJet top_candidate_W = top_candidate.structure_of<fastjet::JHTopTagger>().W();
       ReconstructedParticle* W = _fju->convertFromPseudoJet(top_candidate_W, top_candidate_W.constituents(), particleIn);	    
       lccTopTaggerWOut->addElement(W);
       
       // save part 1 of W candidate
-      PseudoJet top_candidate_W1 = top_candidate.structure_of<JHTopTagger>().W1();
+      fastjet::PseudoJet top_candidate_W1 = top_candidate.structure_of<fastjet::JHTopTagger>().W1();
       ReconstructedParticle* W1 = _fju->convertFromPseudoJet(top_candidate_W1, top_candidate_W1.constituents(), particleIn);	    
       lccTopTaggerW1Out->addElement(W1);
       
       // save part 2 of W candidate
-      PseudoJet top_candidate_W2 = top_candidate.structure_of<JHTopTagger>().W2();
+      fastjet::PseudoJet top_candidate_W2 = top_candidate.structure_of<fastjet::JHTopTagger>().W2();
       ReconstructedParticle* W2 = _fju->convertFromPseudoJet(top_candidate_W2, top_candidate_W2.constituents(), particleIn);	    
       lccTopTaggerW2Out->addElement(W2);    
 
       // save non-W subjet of top candidate
-      PseudoJet top_candidate_nonW = top_candidate.structure_of<JHTopTagger>().non_W();
+      fastjet::PseudoJet top_candidate_nonW = top_candidate.structure_of<fastjet::JHTopTagger>().non_W();
       ReconstructedParticle* nonW = _fju->convertFromPseudoJet(top_candidate_nonW, top_candidate_nonW.constituents(), particleIn);	    
       lccTopTaggernonWOut->addElement(nonW);
          
       // save the polarisation angle of W
-      double top_candidate_cos_theta_W = top_candidate.structure_of<JHTopTagger>().cos_theta_W();
+      double top_candidate_cos_theta_W = top_candidate.structure_of<fastjet::JHTopTagger>().cos_theta_W();
       lcgTopTaggerCosThetaW->setDoubleVal(index, top_candidate_cos_theta_W);
 
     }
@@ -331,14 +348,16 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   evt->addCollection(lccJetsOut, _lcJetOutName);
   if (_storeParticlesInJets) evt->addCollection(lccParticlesOut, _lcParticleOutName);
   
-  lccSubStructure->addElement(lcgSubStructureC2);
-  lccSubStructure->addElement(lcgSubStructureD2);
-  lccSubStructure->addElement(lcgSubStructureC3);
-  lccSubStructure->addElement(lcgSubStructureD3);
-  lccSubStructure->addElement(lcgSubStructureTau1);
-  lccSubStructure->addElement(lcgSubStructureTau2);
-  lccSubStructure->addElement(lcgSubStructureTau3);
-  evt->addCollection(lccSubStructure, "TopTaggerSubStructure");
+  if (_doSubstructure){
+    lccSubStructure->addElement(lcgSubStructureC2);
+    lccSubStructure->addElement(lcgSubStructureD2);
+    lccSubStructure->addElement(lcgSubStructureC3);
+    lccSubStructure->addElement(lcgSubStructureD3);
+    lccSubStructure->addElement(lcgSubStructureTau1);
+    lccSubStructure->addElement(lcgSubStructureTau2);
+    lccSubStructure->addElement(lcgSubStructureTau3);
+    evt->addCollection(lccSubStructure, _lcSubStructureOutName);
+  }
 
   evt->addCollection(lccTopTaggerOut, _lcTopTaggerOutName);
   evt->addCollection(lccTopTaggerWOut, _lcTopTaggerOutName+"_W");
@@ -362,7 +381,7 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   
 } //end processEvent
 
-double FastJetTopTagger::getECF(PseudoJet& jet, int whichECF, double beta, std::string energyCorrelator){
+double FastJetTopTagger::getECF(fastjet::PseudoJet& jet, int whichECF, const std::string& energyCorr){
   /// ********** Energy Correlation Function *** /////////
 
   // options for EnergyCorrelator:
@@ -370,12 +389,14 @@ double FastJetTopTagger::getECF(PseudoJet& jet, int whichECF, double beta, std::
   //   E_theta (energy and angle as dot product of vectors)
   //   E_inv (energy and angle as (2p_i \cdot p_j/E_i E_j)
 
+  if(whichECF > _maxECF)
+    return -1.0;
+
   if(!jet.has_constituents())
     return -1.0;
-    
-  EnergyCorrelator ECF(whichECF, beta, _energyCorrMap[energyCorrelator]);
+  
+  return _energyCorrMap[energyCorr].at(whichECF)(jet);
 
-  return ECF(jet);
 } //end
 
 void FastJetTopTagger::end()
@@ -389,7 +410,7 @@ void FastJetTopTagger::end()
     << std::endl;
 } //end end
 
-std::ostream& operator<<(std::ostream& ostr, const PseudoJet& jet){
+std::ostream& operator<<(std::ostream& ostr, const fastjet::PseudoJet& jet){
   ostr << "pt, y, phi =" << std::setprecision(6)
        << " " << std::setw(9) << jet.perp()
        << " " << std::setw(9) << jet.rap()
