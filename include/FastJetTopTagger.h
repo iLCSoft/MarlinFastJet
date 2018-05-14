@@ -12,42 +12,24 @@
 #define FASTJETTOPTAGGER_H_
 
 #include <marlin/Processor.h>
-#include <marlin/VerbosityLevels.h>
 #include <EVENT/LCCollection.h>
 #include <IMPL/LCCollectionVec.h>
 #include <EVENT/ReconstructedParticle.h>
-#include "IMPL/LCCollectionVec.h"
 #include <IMPL/ReconstructedParticleImpl.h>
-#include <IMPL/LCCollectionVec.h>
 #include <IMPL/LCGenericObjectImpl.h>
-#include <EVENT/MCParticle.h>
-
-#include <LCIOSTLTypes.h>
 
 #include <fastjet/PseudoJet.hh>
-#include "fastjet/SharedPtr.hh"
-#include <fastjet/JetDefinition.hh>
+#include <fastjet/SharedPtr.hh>
+#include <fastjet/Selector.hh>
 #include <fastjet/tools/JHTopTagger.hh>
-#include "fastjet/contrib/Njettiness.hh"
-#include "fastjet/contrib/EnergyCorrelator.hh"
-
-#include <iomanip>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <iostream>
-#include <istream>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-using namespace fastjet;
-using namespace fastjet::contrib;
+#include <fastjet/contrib/Njettiness.hh>
+#include <fastjet/contrib/Nsubjettiness.hh>
+#include <fastjet/contrib/EnergyCorrelator.hh>
 
 //Forward declarations
 class FastJetUtil;
 
-typedef std::vector<PseudoJet> PseudoJetList;
+typedef std::vector<fastjet::PseudoJet> PseudoJetList;
 
 class FastJetTopTagger : marlin::Processor {  
  public:
@@ -86,6 +68,7 @@ class FastJetTopTagger : marlin::Processor {
   std::string _lcParticleOutName;
   std::string _lcJetOutName;
   std::string _lcTopTaggerOutName;
+  std::string _lcSubStructureOutName;
 
   int _statsFoundJets;
   int _statsNrEvents;
@@ -96,6 +79,7 @@ class FastJetTopTagger : marlin::Processor {
 
   FastJetUtil* _fju;
 
+  bool _doSubstructure;
   double _beta;
   std::string _energyCorrelator;
   std::string _axesMode;
@@ -105,27 +89,27 @@ class FastJetTopTagger : marlin::Processor {
   double _deltaR;
   double _cos_theta_W_max;
 
-  JHTopTagger _jhtoptagger;
+  fastjet::JHTopTagger _jhtoptagger;
 
   FastJetTopTagger(const FastJetTopTagger& rhs) = delete;
   FastJetTopTagger & operator = (const FastJetTopTagger&) = delete;
   
-  double getECF(PseudoJet& jet, int whichECF, double beta, std::string energyCorrelator);
+  double getECF(fastjet::PseudoJet& jet, int whichECF, const std::string& energyCorr);
 
-  // Simple class to store Axes along with a name for display
+  // Simple class to store Axes along with a name
   class AxesStruct {
   private:
     // Shared Ptr so it handles memory management
-    SharedPtr<AxesDefinition> _axes_def;
+    fastjet::SharedPtr<fastjet::contrib::AxesDefinition> _axes_def;
   public:
-  AxesStruct(const AxesDefinition & axes_def)
+  AxesStruct(const fastjet::contrib::AxesDefinition & axes_def)
     : _axes_def(axes_def.create()) {}
     
     // Need special copy constructor to make it possible to put in a std::vector
   AxesStruct(const AxesStruct& myStruct)
     : _axes_def(myStruct._axes_def->create()) {}
     
-    const AxesDefinition & def() const {return *_axes_def;}
+    const fastjet::contrib::AxesDefinition & def() const {return *_axes_def;}
     std::string description() const {return _axes_def->description();}
     std::string short_description() const {return _axes_def->short_description();}
   };
@@ -134,26 +118,29 @@ class FastJetTopTagger : marlin::Processor {
   class MeasureStruct { 
   private:
     // Shared Ptr so it handles memory management
-    SharedPtr<MeasureDefinition> _measure_def;
+    fastjet::SharedPtr<fastjet::contrib::MeasureDefinition> _measure_def;
   public:
-  MeasureStruct(const MeasureDefinition& measure_def)
+  MeasureStruct(const fastjet::contrib::MeasureDefinition& measure_def)
     : _measure_def(measure_def.create()) {}
     
     // Need special copy constructor to make it possible to put in a std::vector
-  MeasureStruct(const MeasureStruct& myStruct)
+    MeasureStruct(const MeasureStruct& myStruct)
     : _measure_def(myStruct._measure_def->create()) {}
     
-    const MeasureDefinition & def() const {return *_measure_def;}
+    const fastjet::contrib::MeasureDefinition & def() const {return *_measure_def;}
     std::string description() const {return _measure_def->description();}  
   };
 
-  std::map<std::string, EnergyCorrelator::Measure> _energyCorrMap;
+  std::map<std::string, fastjet::contrib::EnergyCorrelator::Measure> _energyCorrMeasureMap;
+  int _maxECF;
+  std::map<std::string, std::vector<fastjet::contrib::EnergyCorrelator> > _energyCorrMap;
   std::map<std::string, AxesStruct > _axesModeMap;
   std::map<std::string, MeasureStruct > _measureModeMap;
+  std::map<int, fastjet::contrib::Nsubjettiness> _nsubjettinessMap;
     
 };
 
-std::ostream& operator<<(std::ostream&, const PseudoJet&);
+std::ostream& operator<<(std::ostream&, const fastjet::PseudoJet&);
 
 #endif /* FASTJETTOPTAGGER_H_ */
 
