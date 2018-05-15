@@ -80,7 +80,6 @@ class FastJetTopTagger : marlin::Processor {
   FastJetUtil* _fju;
 
   bool _doSubstructure;
-  double _beta;
   std::string _energyCorrelator;
   std::string _axesMode;
   std::string _measureMode;

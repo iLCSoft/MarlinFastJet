@@ -10,6 +10,7 @@
 
 #include <FastJetTopTagger.h>
 #include <FastJetUtil.h>
+#include <VLCAxes.h>
 
 FastJetTopTagger aFastJetTopTagger;
 
@@ -30,7 +31,6 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
 				       _storeParticlesInJets(false),
 				       _fju(new FastJetUtil()),
 				       _doSubstructure(false),
-				       _beta(0.),
 				       _energyCorrelator(""),
 				       _axesMode(""),
 				       _measureMode(""),
@@ -76,10 +76,6 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
 			      "Bool to decide whether (true) or not (false) to calculate substructure variables on each jet. Default is false.",
 			      _doSubstructure,
 			      bool(false));
-  registerProcessorParameter("beta",
-			     "Beta is called angular exponent and weights the angular distances between the jet constituents compared to their pt in the calculation of the energy correlation function and subjettiness.",
-			     _beta,
-			     1.);
   registerProcessorParameter("energyCorrelator",
 			     "Options for contrib::EnergyCorrelator: pt_R (transverse momenta and boost-invariant angles), E_theta (energy and angle as dot product of vectors), E_inv (energy and angle as (2p_i*p_j/E_i E_j) (default: E_theta).",
 			     _energyCorrelator,
@@ -87,7 +83,7 @@ FastJetTopTagger::FastJetTopTagger() : Processor("FastJetTopTagger"),
   registerProcessorParameter("axesMode",
 			     "Option for NSubjettiness calculation. See fastjet NSubjettiness module for all options.",
 			     _axesMode,
-			     std::string("OnePass_WTA_KT_Axes"));
+			     std::string("VLC_Axes"));
   registerProcessorParameter("measureMode",
 			     "Option for NSubjettiness calculation. See fastjet NSubjettiness module for all options. Normalised measure recommended only for advanced users.",
 			     _measureMode,
@@ -131,25 +127,23 @@ void FastJetTopTagger::init()
   //_jhtoptagger.set_W_selector(fastjet::SelectorMassRange(65, 95)); //<--Not used here, can be set in analysis
 
   // initate substructure variables
-  if (_doSubstructure){ 
-    _energyCorrMeasureMap.insert(std::make_pair("pt_R", fastjet::contrib::EnergyCorrelator::pt_R));
-    _energyCorrMeasureMap.insert(std::make_pair("E_theta", fastjet::contrib::EnergyCorrelator::E_theta));
-    _energyCorrMeasureMap.insert(std::make_pair("E_inv", fastjet::contrib::EnergyCorrelator::E_inv));
-    _maxECF = 6;
-    for (std::map<std::string, fastjet::contrib::EnergyCorrelator::Measure>::iterator it=_energyCorrMeasureMap.begin(); it!=_energyCorrMeasureMap.end(); ++it){
-      std::vector<fastjet::contrib::EnergyCorrelator> vEnergyCorr;
-      for (int i=0; i<_maxECF; i++){ fastjet::contrib::EnergyCorrelator ECF(i, _beta, it->second); vEnergyCorr.push_back(ECF); }
-      _energyCorrMap.insert(std::make_pair(it->first, vEnergyCorr));
-    }
-    
-    _axesModeMap.insert(std::make_pair("KT_Axes", fastjet::contrib::KT_Axes()));
-    _axesModeMap.insert(std::make_pair("WTA_KT_Axes", fastjet::contrib::WTA_KT_Axes()));
-    _axesModeMap.insert(std::make_pair("OnePass_KT_Axes", fastjet::contrib::OnePass_KT_Axes()));
-    _axesModeMap.insert(std::make_pair("OnePass_WTA_KT_Axes", fastjet::contrib::OnePass_WTA_KT_Axes()));
-    
-    _measureModeMap.insert(std::make_pair("UnnormalizedMeasure", fastjet::contrib::UnnormalizedMeasure(_beta)));
-
+  _energyCorrMeasureMap.emplace("pt_R", fastjet::contrib::EnergyCorrelator::pt_R);
+  _energyCorrMeasureMap.emplace("E_theta", fastjet::contrib::EnergyCorrelator::E_theta);
+  _energyCorrMeasureMap.emplace("E_inv", fastjet::contrib::EnergyCorrelator::E_inv);
+  _maxECF = 6;
+  double beta = atof(_fju->_jetAlgoNameAndParams[2].c_str());
+  for (std::map<std::string, fastjet::contrib::EnergyCorrelator::Measure>::iterator it=_energyCorrMeasureMap.begin(); it!=_energyCorrMeasureMap.end(); ++it){
+    std::vector<fastjet::contrib::EnergyCorrelator> vEnergyCorr;
+    for (int i=0; i<_maxECF; i++){ fastjet::contrib::EnergyCorrelator ECF(i, beta, it->second); vEnergyCorr.push_back(ECF); }
+    _energyCorrMap.emplace(it->first, vEnergyCorr);
   }
+  
+  _axesModeMap.emplace("KT_Axes", fastjet::contrib::KT_Axes());
+  _axesModeMap.emplace("WTA_KT_Axes", fastjet::contrib::WTA_KT_Axes());
+  _axesModeMap.emplace("OnePass_KT_Axes", fastjet::contrib::OnePass_KT_Axes());
+  _axesModeMap.emplace("OnePass_WTA_KT_Axes", fastjet::contrib::OnePass_WTA_KT_Axes());
+  _axesModeMap.emplace("VLC_Axes", VLC_Axes(_fju->_jetAlgo));
+  _measureModeMap.emplace("UnnormalizedMeasure", fastjet::contrib::UnnormalizedMeasure(beta));
 
   // counters
   _statsFoundJets = 0;
@@ -260,10 +254,20 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   LCGenericObjectImpl* lcgSubStructureTau3 = new LCGenericObjectImpl(0, 0, 2);
 
   //NSubjetiness definitions
-  fastjet::contrib::Nsubjettiness nSubJettiness1(1, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
-  fastjet::contrib::Nsubjettiness nSubJettiness2(2, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
-  fastjet::contrib::Nsubjettiness nSubJettiness3(3, (_axesModeMap.find(_axesMode)->second).def(), (_measureModeMap.find(_measureMode)->second).def());
-
+  auto axModeIt = _axesModeMap.find(_axesMode);
+  auto measModeIt = _measureModeMap.find(_measureMode);
+  if( axModeIt == _axesModeMap.end() ){
+    throw std::runtime_error("Cannot find axesMode");
+  } 
+  if( measModeIt == _measureModeMap.end() ){
+    throw std::runtime_error("Cannot find measureMode");
+  }  
+  auto const& measMode = measModeIt->second.def();
+  auto const& axMode = axModeIt->second.def();
+  fastjet::contrib::Nsubjettiness nSubJettiness1(1, axMode, measMode);
+  fastjet::contrib::Nsubjettiness nSubJettiness2(2, axMode, measMode);
+  fastjet::contrib::Nsubjettiness nSubJettiness3(3, axMode, measMode);
+  
   //Loop over jets
   int index = 0;  
   PseudoJetList::iterator it;
