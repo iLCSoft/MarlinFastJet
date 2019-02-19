@@ -299,6 +299,7 @@ void FastJetUtil::initJetAlgo() {
 				    atof(_jetAlgoNameAndParams[2].c_str())
 				    );
     _jetAlgo = new fastjet::JetDefinition(pl);
+    _jetAlgo->delete_plugin_when_unused();
   }
 
   if (isJetAlgo("SISConeSphericalPlugin", 2, FJ_inclusive | OWN_inclusiveIteration)) {
@@ -310,6 +311,7 @@ void FastJetUtil::initJetAlgo() {
 					     );
 
     _jetAlgo = new fastjet::JetDefinition(pl);
+    _jetAlgo->delete_plugin_when_unused();
   }
 
   if (isJetAlgo("ValenciaPlugin", 3, FJ_exclusive_nJets | FJ_exclusive_yCut)) {
@@ -322,6 +324,7 @@ void FastJetUtil::initJetAlgo() {
 					      );
 
     _jetAlgo = new fastjet::JetDefinition(pl);
+    _jetAlgo->delete_plugin_when_unused();
   }
 
   // TODO: Maybe we should complete the user defined (ATLAS, CMS, ..) algorithms
