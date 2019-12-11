@@ -1,3 +1,14 @@
+# v00-05-02
+
+* 2019-02-19 Andre Sailer ([PR#13](https://github.com/iLCSoft/MarlinFastJet/pull/13))
+  - FastJetUtil: fix memory leak when creating jetDefinition with plugin (SiSCone, Valencia), needs #12 
+  - MarlinFastJet: remove support for FastJet version 2
+
+* 2018-05-18 Lars Rickard Strom ([PR#10](https://github.com/iLCSoft/MarlinFastJet/pull/10))
+  - Implemented substructure parameters commonly used for top tagging. The definition of these new variables can be adjusted from the steering file (added options to steer how to calculate the energy correlation function (energyCorrelator) and how to calculate NSubjettiness (axesMode and measureMode). Only recommended options are implemented. The beta parameter would typically be the same as used for jet clustering but can also be varied separately (beta weights the angular distances between the jet constituents compared to their pt in the calculation of the energy correlation function and subjettiness). 
+  - The substructure variables are added to the file as a collection "TopTaggerSubStructure" of seven elements (order: C2, D2, C3, D3, tau1, tau2, tau3). 
+  - This update is backwards compatible, with the only difference being the addition of this collection.
+
 # v00-05-01
 
 # v00-05
