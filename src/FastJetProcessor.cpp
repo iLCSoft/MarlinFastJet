@@ -110,7 +110,7 @@ void FastJetProcessor::processEvent(LCEvent * evt)
 	throw DataNotAvailableException("Collection is there, but its empty!");
       }
 
-    } catch (DataNotAvailableException e) {
+    } catch (const DataNotAvailableException& e) {
     streamlog_out(WARNING) << e.what() << std::endl << "Skipping" << std::endl;
 
     //create dummy empty collection only in case there are processor that need the presence of them in later stages
@@ -138,9 +138,9 @@ void FastJetProcessor::processEvent(LCEvent * evt)
   PseudoJetList jets;
   try {
     jets = _fju->clusterJets(pjList, particleIn);
-  } catch( SkippedFixedNrJetException& e ) {
+  } catch(const SkippedFixedNrJetException& e ) {
     _statsNrSkippedFixedNrJets++;
-  } catch( SkippedMaxIterationException& e ) {
+  } catch(const SkippedMaxIterationException& e ) {
     jets = e._jets;
     _statsNrSkippedMaxIterations++;
   }
