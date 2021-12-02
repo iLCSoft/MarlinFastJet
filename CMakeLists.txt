@@ -31,7 +31,7 @@ INCLUDE_DIRECTORIES( SYSTEM ${ROOT_INCLUDE_DIRS} )
 LINK_LIBRARIES( ${ROOT_LIBRARIES} )
 ADD_DEFINITIONS( ${ROOT_DEFINITIONS} )
 
-FIND_PACKAGE(FastJet 3 REQUIRED COMPONENTS siscone siscone_spherical fastjetplugins fastjetcontribfragile fastjettools)
+FIND_PACKAGE(FastJet 3 REQUIRED COMPONENTS fastjetplugins fastjetcontribfragile fastjettools siscone_spherical siscone)
 
 INCLUDE_DIRECTORIES( SYSTEM ${FastJet_INCLUDE_DIRS} )
 LINK_LIBRARIES( ${FastJet_LIBRARIES} ${FastJet_COMPONENT_LIBRARIES} )
