@@ -26,7 +26,10 @@ IF( DOXYGEN_FOUND )
                 "${DOXYGEN_EXECUTABLE}"
         WORKING_DIRECTORY "${DOC_SRC_DIR}"
         COMMENT "Building API Documentation..."
-        DEPENDS Doxyfile overview.html CMakeLists.txt ../include/* ../src/*
+        DEPENDS Doxyfile CMakeLists.txt
+	overview.html
+	${PROJECT_SOURCE_DIR}/include/*
+	${PROJECT_SOURCE_DIR}/src/*
     )
 
     # add doc target
