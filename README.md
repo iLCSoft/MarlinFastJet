@@ -1,5 +1,5 @@
 # MarlinFastJet
-[![Build Status](https://travis-ci.org/iLCSoft/MarlinFastJet.svg?branch=master)](https://travis-ci.org/iLCSoft/MarlinFastJet)
+[![linux](https://github.com/iLCSoft/MarlinFastJet/actions/workflows/linux.yml/badge.svg)](https://github.com/iLCSoft/MarlinFastJet/actions/workflows/linux.yml)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/11935/badge.svg)](https://scan.coverity.com/projects/ilcsoft-marlinfastjet)
 
 MarlinFastJet is the interface between Marlin and FastJet
