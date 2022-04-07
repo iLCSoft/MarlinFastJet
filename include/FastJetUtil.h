@@ -49,7 +49,6 @@
 
 #include <stdexcept>
 #include <string>
-#include <tuple>
 
 #define ITERATIVE_INCLUSIVE_MAX_ITERATIONS 20
 typedef std::vector< fastjet::PseudoJet > PseudoJetList;
@@ -159,7 +158,7 @@ public:
   /// convert fastjet pseudojet to reconstructed particle
   inline EVENT::ReconstructedParticle* convertFromPseudoJet(const fastjet::PseudoJet& jet, const PseudoJetList& constituents, LCCollection* reconstructedPars);
   /// does the actual clustering
-  inline std::tuple<PseudoJetList, fastjet::ClusterSequence> clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
+  inline PseudoJetList clusterJets(PseudoJetList& pjList, fastjet::ClusterSequence& cs, LCCollection* reconstructedPars);
 
 protected:
   // helper functions to init the jet algorithms in general
@@ -483,11 +482,9 @@ void FastJetUtil::initClusterMode() {
 
 }
 
-std::tuple<PseudoJetList, fastjet::ClusterSequence>
-FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* reconstructedPars) {
+PseudoJetList FastJetUtil::clusterJets(PseudoJetList& pjList, fastjet::ClusterSequence& cs, LCCollection* reconstructedPars) {
   ///////////////////////////////
   // do the jet finding for the user defined parameter jet finder
-  auto cs = fastjet::ClusterSequence(pjList, *_jetAlgo);
 
   PseudoJetList jets; // will contain the found jets
 
@@ -529,7 +526,7 @@ FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* reconstructedPars
 
   }
 
-  return std::make_tuple<PseudoJetList, fastjet::ClusterSequence>(std::move(jets), std::move(cs));
+  return jets;
 
 }
 

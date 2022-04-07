@@ -208,11 +208,10 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   
   //Jet finding
   PseudoJetList jets;
-  fastjet::ClusterSequence cs;
+  fastjet::ClusterSequence cs = fastjet::ClusterSequence(pjList, *_fju->_jetAlgo);
   try {
     // sort jets according to pt
-    std::tie(jets, cs) = _fju->clusterJets(pjList, particleIn);
-    jets = sorted_by_pt(jets);
+    jets = sorted_by_pt(_fju->clusterJets(pjList, cs, particleIn));
   } catch(SkippedFixedNrJetException& e){
     _statsNrSkippedFixedNrJets++; 
   } catch( SkippedMaxIterationException& e ) {

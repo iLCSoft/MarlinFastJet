@@ -136,9 +136,9 @@ void FastJetProcessor::processEvent(LCEvent * evt)
   PseudoJetList pjList = _fju->convertFromRecParticle(particleIn);
 
   PseudoJetList jets;
-  fastjet::ClusterSequence cs;
+  fastjet::ClusterSequence cs = fastjet::ClusterSequence(pjList, *_fju->_jetAlgo);
   try {
-    std::tie(jets, cs) = _fju->clusterJets(pjList, particleIn);
+    jets = _fju->clusterJets(pjList, cs, particleIn);
   } catch(const SkippedFixedNrJetException& e ) {
     _statsNrSkippedFixedNrJets++;
   } catch(const SkippedMaxIterationException& e ) {
