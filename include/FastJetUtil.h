@@ -71,8 +71,7 @@ public:
 class FastJetUtil {
 
 public:
-  FastJetUtil(): _cs(NULL),
-		 _jetAlgoNameAndParams( EVENT::StringVec() ),
+  FastJetUtil(): _jetAlgoNameAndParams( EVENT::StringVec() ),
 		 _jetAlgoName(""),
 		 _jetAlgo(NULL),
 		 _jetAlgoType(),
@@ -91,7 +90,6 @@ public:
 
 
   FastJetUtil(const FastJetUtil& rhs):
-    _cs(new fastjet::ClusterSequence(*(rhs._cs))),
     _jetAlgoNameAndParams( rhs._jetAlgoNameAndParams ),
     _jetAlgoName(rhs._jetAlgoName),
     _jetAlgo(new fastjet::JetDefinition(*(rhs._jetAlgo))),
@@ -113,8 +111,6 @@ public:
     if( this == &rhs ){
       return *this;
     }
-    delete this->_cs;
-    this->_cs = new fastjet::ClusterSequence(*(rhs._cs));
     delete this->_jetAlgo;
     this->_jetAlgo = new fastjet::JetDefinition(*rhs._jetAlgo);
     return *this;
@@ -122,13 +118,10 @@ public:
 
 
   ~FastJetUtil() {
-    delete _cs;
     delete _jetAlgo;
   }
 
 public:
-
-  fastjet::ClusterSequence *_cs;
 
   // jet algorithm
   EVENT::StringVec _jetAlgoNameAndParams;
@@ -166,7 +159,7 @@ public:
   /// convert fastjet pseudojet to reconstructed particle
   inline EVENT::ReconstructedParticle* convertFromPseudoJet(const fastjet::PseudoJet& jet, const PseudoJetList& constituents, LCCollection* reconstructedPars);
   /// does the actual clustering
-  inline PseudoJetList clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
+  inline std::tuple<PseudoJetList, fastjet::ClusterSequence> clusterJets(PseudoJetList& pjList, LCCollection* reconstructedPars);
 
 protected:
   // helper functions to init the jet algorithms in general
@@ -490,20 +483,21 @@ void FastJetUtil::initClusterMode() {
 
 }
 
-PseudoJetList FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* reconstructedPars) {
+std::tuple<PseudoJetList, fastjet::ClusterSequence>
+FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* reconstructedPars) {
   ///////////////////////////////
   // do the jet finding for the user defined parameter jet finder
-  _cs = new fastjet::ClusterSequence(pjList, *_jetAlgo);
+  auto cs = fastjet::ClusterSequence(pjList, *_jetAlgo);
 
   PseudoJetList jets; // will contain the found jets
 
   if (_clusterMode == FJ_inclusive) {
 
-    jets = _cs->inclusive_jets(_minPt);
+    jets = cs.inclusive_jets(_minPt);
 
   } else if (_clusterMode == FJ_exclusive_yCut) {
 
-    jets = _cs->exclusive_jets_ycut(_yCut);
+    jets = cs.exclusive_jets_ycut(_yCut);
 
   } else if (_clusterMode == FJ_exclusive_nJets) {
 
@@ -515,7 +509,7 @@ PseudoJetList FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* rec
 
     } else {
 
-      jets = _cs->exclusive_jets((int)(_requestedNumberOfJets));
+      jets = cs.exclusive_jets((int)(_requestedNumberOfJets));
 
     }
 
@@ -535,7 +529,7 @@ PseudoJetList FastJetUtil::clusterJets( PseudoJetList& pjList, LCCollection* rec
 
   }
 
-  return jets;
+  return std::make_tuple<PseudoJetList, fastjet::ClusterSequence>(std::move(jets), std::move(cs));
 
 }
 
