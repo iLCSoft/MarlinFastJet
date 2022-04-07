@@ -62,8 +62,8 @@ public:
 
 class SkippedMaxIterationException: public std::runtime_error {
 public:
-  SkippedMaxIterationException( PseudoJetList& jets) :std::runtime_error(""), _jets(jets) {}
-  PseudoJetList& _jets;
+  SkippedMaxIterationException(PseudoJetList& jets) :std::runtime_error(""), _jets(jets) {}
+  PseudoJetList _jets;
 };
 
 
