@@ -208,9 +208,11 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   
   //Jet finding
   PseudoJetList jets;
+  fastjet::ClusterSequence cs;
   try {
     // sort jets according to pt
-    jets = sorted_by_pt(_fju->clusterJets(pjList, particleIn));
+    std::tie(jets, cs) = _fju->clusterJets(pjList, particleIn);
+    jets = sorted_by_pt(jets);
   } catch(SkippedFixedNrJetException& e){
     _statsNrSkippedFixedNrJets++; 
   } catch( SkippedMaxIterationException& e ) {
@@ -274,12 +276,12 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
   for(it=jets.begin(); it != jets.end(); it++, index++) {
     
     // create a reconstructed particle for this jet, and add all the containing particles to it
-    ReconstructedParticle* rec = _fju->convertFromPseudoJet((*it), _fju->_cs->constituents(*it), particleIn);
+    ReconstructedParticle* rec = _fju->convertFromPseudoJet((*it), cs.constituents(*it), particleIn);
     lccJetsOut->addElement( rec );
     
     if (_storeParticlesInJets) {
-      for (unsigned int n = 0; n < _fju->_cs->constituents(*it).size(); ++n){
-	ReconstructedParticle* p = static_cast<ReconstructedParticle*>(particleIn->getElementAt((_fju->_cs->constituents(*it))[n].user_index()));
+      for (unsigned int n = 0; n < cs.constituents(*it).size(); ++n){
+	ReconstructedParticle* p = static_cast<ReconstructedParticle*>(particleIn->getElementAt((cs.constituents(*it))[n].user_index()));
         lccParticlesOut->addElement(p); 
       }
     }
@@ -377,10 +379,10 @@ void FastJetTopTagger::processEvent(LCEvent * evt){
     // save the dcut value for this algorithm (although it might not be meaningful)
     LCParametersImpl &lccJetParams((LCParametersImpl &)lccJetsOut->parameters());
     
-    lccJetParams.setValue(std::string("d_{n-1,n}"), (float)_fju->_cs->exclusive_dmerge(nrJets-1));
-    lccJetParams.setValue(std::string("d_{n,n+1}"), (float)_fju->_cs->exclusive_dmerge(nrJets));
-    lccJetParams.setValue(std::string("y_{n-1,n}"), (float)_fju->_cs->exclusive_ymerge(nrJets-1));
-    lccJetParams.setValue(std::string("y_{n,n+1}"), (float)_fju->_cs->exclusive_ymerge(nrJets));
+    lccJetParams.setValue(std::string("d_{n-1,n}"), (float)cs.exclusive_dmerge(nrJets-1));
+    lccJetParams.setValue(std::string("d_{n,n+1}"), (float)cs.exclusive_dmerge(nrJets));
+    lccJetParams.setValue(std::string("y_{n-1,n}"), (float)cs.exclusive_ymerge(nrJets-1));
+    lccJetParams.setValue(std::string("y_{n,n+1}"), (float)cs.exclusive_ymerge(nrJets));
   }
   
 } //end processEvent
