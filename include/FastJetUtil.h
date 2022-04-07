@@ -35,19 +35,21 @@
 #include <IMPL/ReconstructedParticleImpl.h>
 
 //FastJet
+#include <fastjet/CDFJetCluPlugin.hh>
+#include <fastjet/CDFMidPointPlugin.hh>
+#include <fastjet/ClusterSequence.hh>
+#include <fastjet/EECambridgePlugin.hh>
+#include <fastjet/JadePlugin.hh>
+#include <fastjet/NestedDefsPlugin.hh>
 #include <fastjet/PseudoJet.hh>
 #include <fastjet/SISConePlugin.hh>
 #include <fastjet/SISConeSphericalPlugin.hh>
-#include <fastjet/CDFMidPointPlugin.hh>
-#include <fastjet/CDFJetCluPlugin.hh>
-#include <fastjet/NestedDefsPlugin.hh>
-#include <fastjet/EECambridgePlugin.hh>
-#include <fastjet/JadePlugin.hh>
 
 #include <fastjet/contrib/ValenciaPlugin.hh>
 
 #include <stdexcept>
 #include <string>
+#include <tuple>
 
 #define ITERATIVE_INCLUSIVE_MAX_ITERATIONS 20
 typedef std::vector< fastjet::PseudoJet > PseudoJetList;
