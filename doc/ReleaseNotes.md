@@ -1,3 +1,19 @@
+# v00-05-03
+
+* 2022-06-29 Andre Sailer ([PR#21](https://github.com/iLCSoft/MarlinFastJet/pull/21))
+  - FastJetUtil: fix memory leak in clusterJets function. Change signature of this function to include the clusterSequence, fixes #20 
+  - FastJetProcessor: fix issue for kt algorithm ,fixes #15
+
+* 2021-12-03 Thomas Madlener ([PR#18](https://github.com/iLCSoft/MarlinFastJet/pull/18))
+  - Migrate CI to github actions.
+
+* 2021-12-03 Frank Gaede ([PR#17](https://github.com/iLCSoft/MarlinFastJet/pull/17))
+  - fix order of fastjet libraries at linking step - needed on Ubuntu systems
+  -  fixes https://github.com/iLCSoft/iLCInstall/issues/128
+
+* 2021-12-03 Frank Gaede ([PR#16](https://github.com/iLCSoft/MarlinFastJet/pull/16))
+  - minor fix of source paths in cmake file (for newer cmake versions, eg. 3.17)
+
 # v00-05-02
 
 * 2019-02-19 Andre Sailer ([PR#13](https://github.com/iLCSoft/MarlinFastJet/pull/13))
