@@ -99,6 +99,12 @@ void FastJetProcessor::init()
  */
 void FastJetProcessor::processEvent(LCEvent * evt)
 {
+  // create output collection and save every jet with its particles in it
+	auto lccJetsOut = std::make_unique<IMPL::LCCollectionVec>(LCIO::RECONSTRUCTEDPARTICLE);
+  lccJetsOut->setSubset(true);
+    // create output collection and save every particle which contributes to a jet
+  auto lccParticlesOut = std::make_unique<IMPL::LCCollectionVec>(LCIO::RECONSTRUCTEDPARTICLE);
+  lccParticlesOut->setSubset(true);
 
   LCCollection* particleIn(NULL);
   try
@@ -113,21 +119,9 @@ void FastJetProcessor::processEvent(LCEvent * evt)
     } catch (const DataNotAvailableException& e) {
     streamlog_out(WARNING) << e.what() << std::endl << "Skipping" << std::endl;
 
-    //create dummy empty collection only in case there are processor that need the presence of them in later stages
 
-    // create output collection and save every jet with its particles in it
-    IMPL::LCCollectionVec* lccJetsOut = new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
-    // create output collection and save every particle which contributes to a jet
-
-    IMPL::LCCollectionVec* lccParticlesOut(NULL);
-    if (_storeParticlesInJets){
-      lccParticlesOut= new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
-      lccParticlesOut->setSubset(true);
-    }
-
-    evt->addCollection(lccJetsOut, _lcJetOutName);
-    if (_storeParticlesInJets) evt->addCollection(lccParticlesOut, _lcParticleOutName);
-
+    evt->addCollection(lccJetsOut.release(), _lcJetOutName);
+    if (_storeParticlesInJets) evt->addCollection(lccParticlesOut.release(), _lcParticleOutName);
 
     return ;
   }
@@ -151,15 +145,6 @@ void FastJetProcessor::processEvent(LCEvent * evt)
   _statsFoundJets += jets.size();
   const unsigned nrJets = jets.size();
 
-  // create output collection and save every jet with its particles in it
-  IMPL::LCCollectionVec* lccJetsOut = new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
-  // create output collection and save every particle which contributes to a jet
-  IMPL::LCCollectionVec* lccParticlesOut(NULL);
-  if (_storeParticlesInJets){
-    lccParticlesOut= new IMPL::LCCollectionVec(LCIO::RECONSTRUCTEDPARTICLE);
-    lccParticlesOut->setSubset(true);
-  }
-
   PseudoJetList::iterator it;
 
   for (it=jets.begin(); it != jets.end(); it++) {
@@ -176,8 +161,8 @@ void FastJetProcessor::processEvent(LCEvent * evt)
     }
   }
 
-  evt->addCollection(lccJetsOut, _lcJetOutName);
-  if (_storeParticlesInJets) evt->addCollection(lccParticlesOut, _lcParticleOutName);
+  evt->addCollection(lccJetsOut.release(), _lcJetOutName);
+  if (_storeParticlesInJets) evt->addCollection(lccParticlesOut.release(), _lcParticleOutName);
 
   // special case for the exclusive jet mode: we can save the transition y_cut value
   if (_fju->_clusterMode == FJ_exclusive_nJets && jets.size() == _fju->_requestedNumberOfJets) {
