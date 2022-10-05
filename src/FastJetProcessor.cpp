@@ -161,9 +161,6 @@ void FastJetProcessor::processEvent(LCEvent * evt)
     }
   }
 
-  evt->addCollection(lccJetsOut.release(), _lcJetOutName);
-  if (_storeParticlesInJets) evt->addCollection(lccParticlesOut.release(), _lcParticleOutName);
-
   // special case for the exclusive jet mode: we can save the transition y_cut value
   if (_fju->_clusterMode == FJ_exclusive_nJets && jets.size() == _fju->_requestedNumberOfJets) {
     // save the dcut value for this algorithm (although it might not be meaningful)
@@ -174,6 +171,9 @@ void FastJetProcessor::processEvent(LCEvent * evt)
     lccJetParams.setValue(std::string("y_{n-1,n}"), (float)cs.exclusive_ymerge(nrJets-1));
     lccJetParams.setValue(std::string("y_{n,n+1}"), (float)cs.exclusive_ymerge(nrJets));
   }
+
+  evt->addCollection(lccJetsOut.release(), _lcJetOutName);
+  if (_storeParticlesInJets) evt->addCollection(lccParticlesOut.release(), _lcParticleOutName);
 
 }
 
