@@ -100,9 +100,9 @@ void FastJetProcessor::init()
 void FastJetProcessor::processEvent(LCEvent * evt)
 {
   // create output collection and save every jet with its particles in it
-	auto lccJetsOut = std::make_unique<IMPL::LCCollectionVec>(LCIO::RECONSTRUCTEDPARTICLE);
+  auto lccJetsOut = std::make_unique<IMPL::LCCollectionVec>(LCIO::RECONSTRUCTEDPARTICLE);
   lccJetsOut->setSubset(true);
-    // create output collection and save every particle which contributes to a jet
+  // create output collection and save every particle which contributes to a jet
   auto lccParticlesOut = std::make_unique<IMPL::LCCollectionVec>(LCIO::RECONSTRUCTEDPARTICLE);
   lccParticlesOut->setSubset(true);
 
