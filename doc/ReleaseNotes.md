@@ -1,3 +1,17 @@
+# v00-05-04
+
+* 2026-05-10 jmcarcell ([PR#23](https://github.com/iLCSoft/MarlinFastJet/pull/23))
+  - Find LCIO and substitute Marlin_LIBRARIES for the corresponding libs
+
+* 2026-04-10 Thomas Madlener ([PR#26](https://github.com/iLCSoft/MarlinFastJet/pull/26))
+  - Add Key4hep based CI workflows and remove clicdp based ones
+
+* 2026-04-10 Juan Miguel Carceller ([PR#25](https://github.com/iLCSoft/MarlinFastJet/pull/25))
+  - Bump the minimum version of CMake to 3.10 to be able to compile with CMake 4
+
+* 2026-04-10 Juan Miguel Carceller ([PR#24](https://github.com/iLCSoft/MarlinFastJet/pull/24))
+  - Add LANGUAGES CXX to the project() call not to look for a C compiler
+
 # v00-05-03
 
 * 2022-06-29 Andre Sailer ([PR#21](https://github.com/iLCSoft/MarlinFastJet/pull/21))
